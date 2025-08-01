@@ -19,9 +19,9 @@ var (
 	Status_EZgrpc_Session_SaveFailed = status.New(codes.Internal, "session save failed")
 
 	// Err_SessionNotFound is the underlying error for a missing session.
-	Err_SessionNotFound = errors.New("session not found")
+	ErrSessionNotFound = errors.New("session not found")
 	// Err_SessionSaveFailed is the underlying error for a session save failure.
-	Err_SessionSaveFailed = errors.New("session save failed")
+	ErrSessionSaveFailed = errors.New("session save failed")
 )
 
 // ToStatus converts a custom wrapper error into a gRPC status.Status.
@@ -37,9 +37,9 @@ func ToStatus(err error) *status.Status {
 	var baseSt *status.Status
 
 	switch {
-	case errors.Is(err, Err_SessionNotFound):
+	case errors.Is(err, ErrSessionNotFound):
 		baseSt = Status_EZgrpc_Session_NotFound
-	case errors.Is(err, Err_SessionSaveFailed):
+	case errors.Is(err, ErrSessionSaveFailed):
 		baseSt = Status_EZgrpc_Session_SaveFailed
 	default:
 		// For unhandled errors, create a generic internal error status.

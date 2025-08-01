@@ -54,7 +54,7 @@ func TestGetSessionData_Errors(t *testing.T) {
 
 		// Verify: Check for the specific error
 		assert.Error(t, err)
-		assert.ErrorIs(t, err, Err_SessionNotFound)
+		assert.ErrorIs(t, err, ErrSessionNotFound)
 	})
 
 	t.Run("NoSessionDataInMetadata", func(t *testing.T) {
@@ -66,7 +66,7 @@ func TestGetSessionData_Errors(t *testing.T) {
 
 		// Verify: Check for the specific error
 		assert.Error(t, err)
-		assert.ErrorIs(t, err, Err_SessionNotFound)
+		assert.ErrorIs(t, err, ErrSessionNotFound)
 	})
 
 	t.Run("CorruptedData", func(t *testing.T) {

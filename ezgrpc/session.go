@@ -114,8 +114,8 @@ func getBoolFromServerMetadata(md runtime.ServerMetadata, name string, defaultVa
 	return strings.ToLower(boolString) == valueTrue
 }
 
-var errSessionNotFoundInContext = fmt.Errorf("%w: session not found in context", Err_SessionNotFound)
-var errRequestNotFoundInContext = fmt.Errorf("%w: request not found in context", Err_SessionNotFound)
+var errSessionNotFoundInContext = fmt.Errorf("%w: session not found in context", ErrSessionNotFound)
+var errRequestNotFoundInContext = fmt.Errorf("%w: request not found in context", ErrSessionNotFound)
 
 // saveSession saves session data to the session store.
 func saveSession(ctx context.Context, response http.ResponseWriter, data string) error {
@@ -130,7 +130,7 @@ func saveSession(ctx context.Context, response http.ResponseWriter, data string)
 	session.Values[sessionDataKey] = data
 	err := session.Save(req, response)
 	if err != nil {
-		return fmt.Errorf("%w: %w", Err_SessionSaveFailed, err)
+		return fmt.Errorf("%w: %w", ErrSessionSaveFailed, err)
 	}
 	return nil
 }
@@ -152,7 +152,7 @@ func deleteSession(ctx context.Context, response http.ResponseWriter) error {
 	session.Options.Path = "/"
 	// "Save" the session with max age = -1 to clear it.
 	if err := session.Save(req, response); err != nil {
-		return fmt.Errorf("%w: %w", Err_SessionSaveFailed, err)
+		return fmt.Errorf("%w: %w", ErrSessionSaveFailed, err)
 	}
 	return nil
 }
@@ -216,12 +216,12 @@ func SetSessionData[T any](ctx context.Context, value T) error {
 func GetSessionData[T any](ctx context.Context) (T, error) {
 	md, ok := metadata.FromIncomingContext(ctx)
 	if !ok {
-		return *new(T), fmt.Errorf("%w: can't get metadata from context", Err_SessionNotFound)
+		return *new(T), fmt.Errorf("%w: can't get metadata from context", ErrSessionNotFound)
 	}
 	// Retrieve the session data from the metadata.
 	data := md.Get(sessionDataKey)
 	if len(data) == 0 {
-		return *new(T), fmt.Errorf("%w: can't get session data from metadata", Err_SessionNotFound)
+		return *new(T), fmt.Errorf("%w: can't get session data from metadata", ErrSessionNotFound)
 	}
 	return codec.Decode[T](data[0])
 }

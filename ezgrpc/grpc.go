@@ -54,6 +54,7 @@ var (
 	// This allows user information from headers to be passed to the gRPC service.
 	DefaultHeaderMatcher = runtime.WithIncomingHeaderMatcher(func(k string) (string, bool) {
 		// Map the HTTP header "user" to the gRPC metadata "user"
+		fmt.Println(strings.ToLower(k))
 		if v, ok := headerTransMap[strings.ToLower(k)]; ok {
 			return v, true
 		}

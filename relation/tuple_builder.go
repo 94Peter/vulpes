@@ -24,7 +24,7 @@ func (t *tupleBuilder) AppendInsertTupleWithSubjectId(namespace, object, relatio
 	})
 }
 
-func (t *tupleBuilder) AppendInsertTupleWithSubjectSet(namespace, object, relation, subjectNamespace, subjectObject string) {
+func (t *tupleBuilder) AppendInsertTupleWithSubjectSet(namespace, object, relation, subjectNamespace, subjectObject, subjectRelation string) {
 	*t = append(*t, &pb.RelationTupleDelta{
 		Action: pb.RelationTupleDelta_ACTION_INSERT,
 		RelationTuple: &pb.RelationTuple{
@@ -36,6 +36,7 @@ func (t *tupleBuilder) AppendInsertTupleWithSubjectSet(namespace, object, relati
 					Set: &pb.SubjectSet{
 						Namespace: subjectNamespace,
 						Object:    subjectObject,
+						Relation:  subjectRelation,
 					},
 				},
 			},

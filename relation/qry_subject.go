@@ -34,7 +34,7 @@ func (o *querySubjectResp) AddSubjectSet(namespace, object string) {
 
 func QuerySubjectByObjectRelation(ctx context.Context, namespace, object, relation string) (*querySubjectResp, error) {
 	if readconn == nil {
-		return nil, fmt.Errorf("read connection not initialized")
+		return nil, ErrReadConnectNotInitialed
 	}
 
 	readClient := pb.NewReadServiceClient(readconn)
@@ -46,6 +46,10 @@ func QuerySubjectByObjectRelation(ctx context.Context, namespace, object, relati
 			Relation:  relation,
 		},
 	})
+
+	if err != nil {
+		return nil, fmt.Errorf("%w: %w", ErrReadFailed, err)
+	}
 
 	result := &querySubjectResp{
 		Namespace: namespace,
@@ -60,5 +64,5 @@ func QuerySubjectByObjectRelation(ctx context.Context, namespace, object, relati
 		}
 	}
 
-	return result, err
+	return result, nil
 }

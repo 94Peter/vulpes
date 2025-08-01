@@ -29,7 +29,7 @@ func (o *queryObjectResp) AddObject(namespace, object string) {
 
 func QueryObjectBySubjectIdRelation(ctx context.Context, namespace, subjectId, relation string) (*queryObjectResp, error) {
 	if readconn == nil {
-		return nil, fmt.Errorf("read connection not initialized")
+		return nil, ErrReadConnectNotInitialed
 	}
 
 	readClient := pb.NewReadServiceClient(readconn)
@@ -46,22 +46,26 @@ func QueryObjectBySubjectIdRelation(ctx context.Context, namespace, subjectId, r
 		},
 	})
 
+	if err != nil {
+		return nil, fmt.Errorf("%w: %w", ErrReadFailed, err)
+	}
+
 	result := &queryObjectResp{
 		Namespace: namespace,
 		SubjectId: subjectId,
 		Relation:  relation,
 	}
-	fmt.Println(len(resp.RelationTuples))
+
 	for _, rt := range resp.RelationTuples {
 		result.AddObject(rt.Namespace, rt.Object)
 	}
 
-	return result, err
+	return result, nil
 }
 
 func QueryObjectBySubjectSetRelation(ctx context.Context, namespace, subjectNamespace, subjectObject, relation string) (*queryObjectResp, error) {
 	if readconn == nil {
-		return nil, fmt.Errorf("read connection not initialized")
+		return nil, ErrReadConnectNotInitialed
 	}
 
 	readClient := pb.NewReadServiceClient(readconn)

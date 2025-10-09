@@ -4,13 +4,27 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"os"
 	"sync"
 	"time"
 
 	"github.com/arwoosa/vulpes/log"
+	"github.com/gorilla/csrf"
 
 	"github.com/gin-gonic/gin"
 )
+
+type config struct {
+	Port uint16
+	CSRF struct {
+		Enable       bool
+		Secret       string
+		FieldName    string
+		ExcludePaths []string
+	}
+	StaticFS    map[string]http.FileSystem
+	Middlewares []gin.HandlerFunc
+}
 
 var (
 	// engine is the singleton gin.Engine instance.
@@ -22,6 +36,18 @@ var (
 		gin.Recovery(),
 		gin.Logger(),
 	}
+
+	defaultConfig = config{
+		Port: 8080,
+		CSRF: struct {
+			Enable       bool
+			Secret       string
+			FieldName    string
+			ExcludePaths []string
+		}{},
+		Middlewares: defaultMiddelware,
+		StaticFS:    make(map[string]http.FileSystem),
+	}
 )
 
 // RegisterGinApi allows for the registration of API routes using a function.
@@ -32,19 +58,40 @@ func RegisterGinApi(f func(router Router)) {
 
 // initEngin initializes the gin engine as a singleton.
 // It sets up the default middleware and registers all the routes that have been collected.
-func initEngin() {
+func initEngin(cfg *config) {
 	once.Do(func() {
 		engine = gin.New()
-		engine.Use(defaultMiddelware...)
+		for k, fs := range cfg.StaticFS {
+			engine.StaticFS(k, fs)
+		}
+		engine.Use(cfg.Middlewares...)
 		routers.register(engine)
 	})
 }
 
 // server creates and configures an *http.Server with the gin engine as its handler.
-func server(port int) *http.Server {
-	portStr := fmt.Sprintf(":%d", port)
+func server(cfg *config) *http.Server {
+	portStr := fmt.Sprintf(":%d", cfg.Port)
 	log.Info("api service listen on port " + portStr)
-	initEngin()
+	if cfg.CSRF.Enable {
+		if cfg.CSRF.Secret == "" {
+			panic("csrf secret is required")
+		}
+		if cfg.CSRF.FieldName == "" {
+			panic("csrf field name is required")
+		}
+		isProd := os.Getenv("GIN_MODE") == "release"
+		protect := csrf.Protect(
+			[]byte(cfg.CSRF.Secret),
+			csrf.Secure(isProd),
+			csrf.HttpOnly(true),
+			csrf.MaxAge(43200), // 12 hours
+			csrf.FieldName(cfg.CSRF.FieldName),
+		)
+		cfg.Middlewares = append(cfg.Middlewares, csrfProtectionWithExclusion(protect, cfg.CSRF.ExcludePaths))
+	}
+	initEngin(cfg)
+
 	return &http.Server{
 		Addr:              portStr,
 		ReadHeaderTimeout: 3 * time.Second,
@@ -57,26 +104,21 @@ var once sync.Once
 
 // GetHttpHandler returns the singleton gin.Engine instance as an http.Handler.
 // This allows the gin engine to be used with an existing http.Server.
-func GetHttpHandler() http.Handler {
-	initEngin()
-	return engine
-}
-
-type middlewareFunc func(*[]gin.HandlerFunc)
-
-func WithMiddleware(f gin.HandlerFunc) middlewareFunc {
-	return func(middleware *[]gin.HandlerFunc) {
-		*middleware = append(*middleware, f)
+func GetHttpHandler(opts ...option) http.Handler {
+	for _, opt := range opts {
+		opt(&defaultConfig)
 	}
+	initEngin(&defaultConfig)
+	return engine
 }
 
 // RunGin starts the gin server on the specified port and handles graceful shutdown.
 // It blocks until the provided context is canceled.
-func RunGin(ctx context.Context, port int, middlewares ...middlewareFunc) error {
-	for _, f := range middlewares {
-		f(&defaultMiddelware)
+func RunGin(ctx context.Context, opts ...option) error {
+	for _, opt := range opts {
+		opt(&defaultConfig)
 	}
-	ser := server(port)
+	ser := server(&defaultConfig)
 	var apiWait sync.WaitGroup
 	apiWait.Add(1)
 	go func(srv *http.Server) {

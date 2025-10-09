@@ -15,6 +15,7 @@ type SDK interface {
 	CreateClassIfNotExists(ctx context.Context, class *models.Class) error
 	CreateData(ctx context.Context, data Data) error
 	CreateOrUpdateData(ctx context.Context, data Data) error
+	querySDK
 }
 
 var sdk SDK

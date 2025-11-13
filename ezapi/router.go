@@ -33,6 +33,7 @@ type router struct {
 // routerGroup holds a collection of routes that will be registered with the gin engine.
 type routerGroup struct {
 	routers []*router
+	group   map[string]*routerGroup
 }
 
 // GET adds a new GET route to the group.

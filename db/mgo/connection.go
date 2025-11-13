@@ -8,6 +8,7 @@ import (
 	"sync"
 	"time"
 
+	"go.mongodb.org/mongo-driver/v2/bson"
 	"go.mongodb.org/mongo-driver/v2/mongo"
 	"go.mongodb.org/mongo-driver/v2/mongo/options"
 	"go.mongodb.org/mongo-driver/v2/mongo/readpref"
@@ -47,6 +48,8 @@ func WithMaxConnIdleTime(d time.Duration) Option {
 	}
 }
 
+var isConnected bool
+
 // InitConnection establishes a connection to the MongoDB server using a singleton pattern.
 // It is safe to call this function multiple times; the connection will only be initialized once.
 //
@@ -83,6 +86,7 @@ func InitConnection(ctx context.Context, dbName string, opts ...Option) error {
 		dataStore = &mongoStore{
 			db: client.Database(dbName),
 		}
+		isConnected = true
 	})
 
 	return err
@@ -95,4 +99,16 @@ func Close(ctx context.Context) error {
 		return dataStore.close(ctx)
 	}
 	return nil
+}
+
+func IsConnected() bool {
+	return isConnected
+}
+
+func IsCollectionExist(ctx context.Context, collectionName string) (bool, error) {
+	result, err := dataStore.getDatabase().ListCollectionNames(ctx, bson.D{{Key: "name", Value: collectionName}})
+	if err != nil {
+		return false, err
+	}
+	return len(result) > 0, nil
 }

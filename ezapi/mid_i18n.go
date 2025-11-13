@@ -10,9 +10,16 @@ import (
 
 func I18n(defaultLanguage string, isLocalExist func(lang string) bool) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		lang := c.Param("lang")
+		lang := c.GetString("line.liff.locale")
+		if lang == "" {
+			lang = c.Param("lang")
+		}
 
 		if lang != "" {
+			if !isLocalExist(lang) {
+				c.Next()
+				return
+			}
 			ctx, err := ctxi18n.WithLocale(c.Request.Context(), strings.ToLower(lang))
 			if err != nil {
 				c.Writer.WriteHeader(http.StatusInternalServerError)
@@ -20,7 +27,7 @@ func I18n(defaultLanguage string, isLocalExist func(lang string) bool) gin.Handl
 				c.Abort()
 				return
 			}
-			c.Request = c.Request.WithContext(ctx)
+			c.Request = c.Request.Clone(ctx)
 		}
 
 		c.Next()

@@ -14,16 +14,18 @@ type Datastore interface {
 	Save(ctx context.Context, doc DocInter) (DocInter, error)
 	Find(ctx context.Context, collection string, filter any, opts ...options.Lister[options.FindOptions]) (*mongo.Cursor, error)
 	FindOne(ctx context.Context, collection string, filter any, opts ...options.Lister[options.FindOneOptions]) *mongo.SingleResult
-	UpdateOne(ctx context.Context, collection string, filter bson.D, update bson.D) (int64, error)
+	UpdateOne(ctx context.Context, collection string, filter bson.D, update bson.D, opts ...options.Lister[options.UpdateOneOptions]) (int64, error)
 	UpdateMany(ctx context.Context, collection string, filter bson.D, update bson.D) (int64, error)
 	DeleteOne(ctx context.Context, collection string, filter bson.D) (int64, error)
 	DeleteMany(ctx context.Context, collection string, filter bson.D) (int64, error)
+	ReplaceOne(ctx context.Context, collection string, filter any, replacement any, opts ...options.Lister[options.ReplaceOptions]) (*mongo.UpdateResult, error)
 
 	PipeFind(ctx context.Context, collection string, pipeline mongo.Pipeline) (*mongo.Cursor, error)
 	PipeFindOne(ctx context.Context, collection string, pipeline mongo.Pipeline) *mongo.SingleResult
 
 	NewBulkOperation(cname string) BulkOperator
 	getCollection(name string) *mongo.Collection
+	getDatabase() *mongo.Database
 	close(ctx context.Context) error
 }
 
@@ -50,4 +52,8 @@ func (m *mongoStore) getCollection(name string) *mongo.Collection {
 
 func (m *mongoStore) close(ctx context.Context) error {
 	return m.db.Client().Disconnect(ctx)
+}
+
+func (m *mongoStore) getDatabase() *mongo.Database {
+	return m.db
 }

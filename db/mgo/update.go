@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"go.mongodb.org/mongo-driver/v2/bson"
+	"go.mongodb.org/mongo-driver/v2/mongo/options"
 )
 
 // UpdateById updates a single document identified by the _id field of the provided document instance.
@@ -39,8 +40,8 @@ func UpdateMany[T DocInter](ctx context.Context, doc T, filter bson.D, update bs
 	return dataStore.UpdateMany(ctx, doc.C(), filter, update)
 }
 
-func (m *mongoStore) UpdateOne(ctx context.Context, collection string, filter bson.D, update bson.D) (int64, error) {
-	result, err := m.getCollection(collection).UpdateOne(ctx, filter, update)
+func (m *mongoStore) UpdateOne(ctx context.Context, collection string, filter bson.D, update bson.D, opts ...options.Lister[options.UpdateOneOptions]) (int64, error) {
+	result, err := m.getCollection(collection).UpdateOne(ctx, filter, update, opts...)
 	if err != nil {
 		return 0, fmt.Errorf("%w: %v", ErrWriteFailed, err)
 	}

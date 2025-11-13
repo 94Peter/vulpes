@@ -4,18 +4,27 @@ import (
 	"context"
 	"fmt"
 	"net/http"
-	"os"
+	"slices"
 	"sync"
 	"time"
 
-	"github.com/arwoosa/vulpes/log"
-	"github.com/gorilla/csrf"
-
+	"github.com/gin-contrib/sessions"
 	"github.com/gin-gonic/gin"
+	csrf "github.com/utrack/gin-csrf"
+
+	"github.com/arwoosa/vulpes/ezapi/session/store"
+	"github.com/arwoosa/vulpes/log"
 )
 
 type config struct {
-	Port uint16
+	Port    uint16
+	Session struct {
+		Enable     bool
+		Store      string
+		CookieName string
+		MaxAge     int
+		KeyPairs   [][]byte
+	}
 	CSRF struct {
 		Enable       bool
 		Secret       string
@@ -36,9 +45,17 @@ var (
 		gin.Recovery(),
 		gin.Logger(),
 	}
+	myStore store.Store
 
 	defaultConfig = config{
 		Port: 8080,
+		Session: struct {
+			Enable     bool
+			Store      string
+			CookieName string
+			MaxAge     int
+			KeyPairs   [][]byte
+		}{},
 		CSRF: struct {
 			Enable       bool
 			Secret       string
@@ -48,12 +65,21 @@ var (
 		Middlewares: defaultMiddelware,
 		StaticFS:    make(map[string]http.FileSystem),
 	}
+	sessionInjectors []SessionStoreInjector
 )
 
 // RegisterGinApi allows for the registration of API routes using a function.
 // This function can be called from anywhere to add routes to the central routerGroup.
 func RegisterGinApi(f func(router Router)) {
 	f(routers)
+}
+
+type SessionStoreInjector interface {
+	InjectSessionStore(sessionStore store.Store, cookieName string)
+}
+
+func RegisterSessionInjector(injector SessionStoreInjector) {
+	sessionInjectors = append(sessionInjectors, injector)
 }
 
 // initEngin initializes the gin engine as a singleton.
@@ -73,22 +99,69 @@ func initEngin(cfg *config) {
 func server(cfg *config) *http.Server {
 	portStr := fmt.Sprintf(":%d", cfg.Port)
 	log.Info("api service listen on port " + portStr)
+	if cfg.Session.Enable {
+		if cfg.Session.Store == "" {
+			panic("session store is required")
+		}
+		if cfg.Session.CookieName == "" {
+			panic("session name is required")
+		}
+		if cfg.Session.MaxAge == 0 {
+			panic("session max age is required")
+		}
+		if len(cfg.Session.KeyPairs) == 0 {
+			panic("session key pairs is required")
+		}
+		myStore = store.NewStore(cfg.Session.Store, cfg.Session.MaxAge, cfg.Session.KeyPairs...)
+		if myStore == nil {
+			panic("session store is not supported: " + cfg.Session.Store)
+		}
+
+		for _, injector := range sessionInjectors {
+			injector.InjectSessionStore(myStore, cfg.Session.CookieName)
+		}
+
+		cfg.Middlewares = append(
+			[]gin.HandlerFunc{
+				sessions.Sessions(cfg.Session.CookieName, myStore),
+			},
+			cfg.Middlewares...,
+		)
+
+	}
+
 	if cfg.CSRF.Enable {
+		if !cfg.Session.Enable {
+			panic("csrf requires session")
+		}
 		if cfg.CSRF.Secret == "" {
 			panic("csrf secret is required")
 		}
 		if cfg.CSRF.FieldName == "" {
 			panic("csrf field name is required")
 		}
-		isProd := os.Getenv("GIN_MODE") == "release"
-		protect := csrf.Protect(
-			[]byte(cfg.CSRF.Secret),
-			csrf.Secure(isProd),
-			csrf.HttpOnly(true),
-			csrf.MaxAge(43200), // 12 hours
-			csrf.FieldName(cfg.CSRF.FieldName),
+		cfg.Middlewares = append(cfg.Middlewares,
+			csrfProtectionWithExclusion(
+				csrf.Middleware(
+					csrf.Options{
+						Secret: cfg.CSRF.Secret,
+						ErrorFunc: func(c *gin.Context) {
+							c.String(400, "CSRF token mismatch")
+							log.Warn("csrf token mismatch")
+							c.Abort()
+						},
+					},
+				),
+				cfg.CSRF.ExcludePaths,
+			),
+			func(c *gin.Context) {
+				if !slices.Contains(cfg.CSRF.ExcludePaths, c.Request.URL.Path) {
+					c.Request = c.Request.WithContext(context.WithValue(c.Request.Context(), "gorilla.csrf.Token", csrf.GetToken(c)))
+				}
+				c.Next()
+			},
 		)
-		cfg.Middlewares = append(cfg.Middlewares, csrfProtectionWithExclusion(protect, cfg.CSRF.ExcludePaths))
+		// cfg.Middlewares = append(cfg.Middlewares, csrfProtectionWithExclusion(protect, cfg.CSRF.ExcludePaths))
 	}
 	initEngin(cfg)
 

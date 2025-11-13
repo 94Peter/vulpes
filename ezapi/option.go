@@ -23,6 +23,19 @@ func WithCsrf(enable bool, secret string, fieldname string, excludePaths ...stri
 	}
 }
 
+func WithSession(enable bool, store string, cookieName string, maxAge int, keyPairs ...string) option {
+	return func(c *config) {
+		c.Session.Enable = enable
+		c.Session.Store = store
+		c.Session.CookieName = cookieName
+		c.Session.MaxAge = maxAge
+		c.Session.KeyPairs = make([][]byte, len(keyPairs))
+		for i, keyPair := range keyPairs {
+			c.Session.KeyPairs[i] = []byte(keyPair)
+		}
+	}
+}
+
 func WithMiddleware(middleware ...gin.HandlerFunc) option {
 	return func(c *config) {
 		c.Middlewares = append(defaultMiddelware, middleware...)

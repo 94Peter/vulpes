@@ -36,12 +36,14 @@ type MockDatastore struct {
 	OnFindOne          func(ctx context.Context, collection string, filter any, opts ...options.Lister[options.FindOneOptions]) *mongo.SingleResult
 	OnUpdateOne        func(ctx context.Context, collection string, filter bson.D, update bson.D) (int64, error)
 	OnUpdateMany       func(ctx context.Context, collection string, filter bson.D, update bson.D) (int64, error)
+	OnReplaceOne       func(ctx context.Context, collection string, filter any, replacement any, opts ...options.Lister[options.ReplaceOptions]) (*mongo.UpdateResult, error)
 	OnDeleteOne        func(ctx context.Context, collection string, filter bson.D) (int64, error)
 	OnDeleteMany       func(ctx context.Context, collection string, filter bson.D) (int64, error)
 	OnPipeFind         func(ctx context.Context, collection string, pipeline mongo.Pipeline) (*mongo.Cursor, error)
 	OnPipeFindOne      func(ctx context.Context, collection string, pipeline mongo.Pipeline) *mongo.SingleResult
 	OnNewBulkOperation func(cname string) BulkOperator
 	OnGetCollection    func(name string) *mongo.Collection
+	OnGetDatabase      func() *mongo.Database
 	OnClose            func(ctx context.Context) error
 }
 
@@ -67,12 +69,16 @@ func (m *MockDatastore) FindOne(ctx context.Context, collection string, filter a
 	return m.OnFindOne(ctx, collection, filter, opts...)
 }
 
-func (m *MockDatastore) UpdateOne(ctx context.Context, collection string, filter bson.D, update bson.D) (int64, error) {
+func (m *MockDatastore) UpdateOne(ctx context.Context, collection string, filter bson.D, update bson.D, opts ...options.Lister[options.UpdateOneOptions]) (int64, error) {
 	return m.OnUpdateOne(ctx, collection, filter, update)
 }
 
 func (m *MockDatastore) UpdateMany(ctx context.Context, collection string, filter bson.D, update bson.D) (int64, error) {
 	return m.OnUpdateMany(ctx, collection, filter, update)
+}
+
+func (m *MockDatastore) ReplaceOne(ctx context.Context, collection string, filter any, replacement any, opts ...options.Lister[options.ReplaceOptions]) (*mongo.UpdateResult, error) {
+	return m.OnReplaceOne(ctx, collection, filter, replacement, opts...)
 }
 
 func (m *MockDatastore) DeleteOne(ctx context.Context, collection string, filter bson.D) (int64, error) {
@@ -101,6 +107,10 @@ func (m *MockDatastore) getCollection(name string) *mongo.Collection {
 
 func (m *MockDatastore) close(ctx context.Context) error {
 	return m.OnClose(ctx)
+}
+
+func (m *MockDatastore) getDatabase() *mongo.Database {
+	return m.OnGetDatabase()
 }
 
 // Interface implementations for MockBulkOperator

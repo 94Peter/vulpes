@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"reflect"
 
-	"github.com/arwoosa/vulpes/ezgrpc/client"
+	"github.com/94peter/vulpes/ezgrpc/client"
 )
 
 var grpcClt client.Client

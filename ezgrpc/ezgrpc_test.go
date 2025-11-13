@@ -6,7 +6,7 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/arwoosa/vulpes/ezgrpc/client"
+	"github.com/94peter/vulpes/ezgrpc/client"
 	"github.com/stretchr/testify/assert"
 )
 

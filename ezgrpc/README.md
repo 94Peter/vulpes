@@ -13,7 +13,7 @@
 ## 安裝
 
 ```bash
-go get github.com/arwoosa/vulpes/ezgrpc
+go get github.com/94peter/vulpes/ezgrpc
 ```
 
 ## 快速入門
@@ -70,7 +70,7 @@ import (
 	"context"
 	"log"
 
-	"github.com/arwoosa/vulpes/ezgrpc"
+	"github.com/94peter/vulpes/ezgrpc"
 	"google.golang.org/grpc"
 	
 	// 引入您產生的 pb 檔案
@@ -125,7 +125,7 @@ import (
 	"fmt"
 	"log"
 
-	"github.com/arwoosa/vulpes/ezgrpc"
+	"github.com/94peter/vulpes/ezgrpc"
 	
 	// 透過空白導入來觸發 greeter 服務的 init() 函數
 	_ "path/to/your/greeter"
@@ -235,7 +235,7 @@ import (
 	"fmt"
 	"log"
 
-	"github.com/arwoosa/vulpes/ezgrpc"
+	"github.com/94peter/vulpes/ezgrpc"
 )
 
 // Assume we want to call a service with a GetImageURI method

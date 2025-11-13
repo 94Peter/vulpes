@@ -43,8 +43,8 @@ First, define the `User` model using the `db/mgo` package patterns.
 package models
 
 import (
-	"github.com/arwoosa/vulpes/db/mgo"
-	"github.com/arwoosa/vulpes/validate"
+	"github.com/94peter/vulpes/db/mgo"
+	"github.com/94peter/vulpes/validate"
 	"go.mongodb.org/mongo-driver/v2/bson"
 	"go.mongodb.org/mongo-driver/v2/mongo"
 	"go.mongodb.org/mongo-driver/v2/mongo/options"
@@ -123,9 +123,9 @@ package services
 import (
 	"context"
 
-	"github.com/arwoosa/vulpes/db/mgo"
-	"github.com/arwoosa/vulpes/ezgrpc"
-	"github.com/arwoosa/vulpes/log"
+	"github.com/94peter/vulpes/db/mgo"
+	"github.com/94peter/vulpes/ezgrpc"
+	"github.com/94peter/vulpes/log"
 	"path/to/your/models"
 	pb "path/to/your/user"
 	"google.golang.org/grpc"
@@ -179,9 +179,9 @@ import (
 	"log"
 	"time"
 
-	"github.com/arwoosa/vulpes/db/mgo"
-	"github.com/arwoosa/vulpes/ezgrpc"
-	vulpeslog "github.com/arwoosa/vulpes/log"
+	"github.com/94peter/vulpes/db/mgo"
+	"github.com/94peter/vulpes/ezgrpc"
+	vulpeslog "github.com/94peter/vulpes/log"
 
 	// Blank imports to trigger service and model registration
 	_ "path/to/your/models"
@@ -219,5 +219,5 @@ func main() {
 ## Installation
 
 ```bash
-go get github.com/arwoosa/vulpes/...
+go get github.com/94peter/vulpes/...
 ```

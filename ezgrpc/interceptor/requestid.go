@@ -5,7 +5,7 @@ package interceptor
 import (
 	"context"
 
-	"github.com/arwoosa/vulpes/log"
+	"github.com/94peter/vulpes/log"
 
 	"github.com/google/uuid"
 	"google.golang.org/grpc"

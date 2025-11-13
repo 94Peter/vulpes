@@ -35,7 +35,7 @@ linters:
 linters-settings:
   # gofumpt includes the functionality of goimports.
   goimports:
-    local-prefixes: github.com/arwoosa/vulpes
+    local-prefixes: github.com/94peter/vulpes
   misspell:
     locale: US
   errcheck:

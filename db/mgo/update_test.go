@@ -5,7 +5,7 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/arwoosa/vulpes/db/mgo"
+	"github.com/94peter/vulpes/db/mgo"
 	"github.com/stretchr/testify/assert"
 	"go.mongodb.org/mongo-driver/v2/bson"
 )

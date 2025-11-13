@@ -34,8 +34,8 @@ The model itself should embed the `mgo.Index` interface, which will be fulfilled
 package models
 
 import (
-	"github.com/arwoosa/vulpes/db/mgo"
-	"github.com/arwoosa/vulpes/validate"
+	"github.com/94peter/vulpes/db/mgo"
+	"github.com/94peter/vulpes/validate"
 	"go.mongodb.org/mongo-driver/v2/bson"
 	"go.mongodb.org/mongo-driver/v2/mongo"
 	"go.mongodb.org/mongo-driver/v2/mongo/options"
@@ -115,7 +115,7 @@ import (
 	"log"
 	"time"
 
-	"github.com/arwoosa/vulpes/db/mgo"
+	"github.com/94peter/vulpes/db/mgo"
 	// Blank import to trigger the init() function in the models package.
 	_ "path/to/your/models"
 )

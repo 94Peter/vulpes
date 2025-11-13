@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/arwoosa/vulpes/log"
+	"github.com/94peter/vulpes/log"
 
 	"go.mongodb.org/mongo-driver/v2/bson"
 	"go.mongodb.org/mongo-driver/v2/mongo"

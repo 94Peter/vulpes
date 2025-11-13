@@ -23,7 +23,7 @@ package main
 
 import (
 	"os"
-	"github.com/arwoosa/vulpes/log"
+	"github.com/94peter/vulpes/log"
 )
 
 func main() {
@@ -49,7 +49,7 @@ Once configured (or using defaults), you can call the logging functions from any
 Structured logging is the preferred method, especially in production, as it makes logs machine-readable and easier to query.
 
 ```go
-import "github.com/arwoosa/vulpes/log"
+import "github.com/94peter/vulpes/log"
 
 func processRequest(requestID string, userID int) error {
     log.Info("Processing request",
@@ -77,7 +77,7 @@ func processRequest(requestID string, userID int) error {
 For simple messages or during early development, `...f` style functions can be more convenient.
 
 ```go
-import "github.com/arwoosa/vulpes/log"
+import "github.com/94peter/vulpes/log"
 
 func greet(name string) {
     log.Infof("Hello, %s! Welcome to the application.", name)

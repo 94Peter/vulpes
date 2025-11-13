@@ -10,8 +10,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/arwoosa/vulpes/ezgrpc/interceptor"
-	"github.com/arwoosa/vulpes/log"
+	"github.com/94peter/vulpes/ezgrpc/interceptor"
+	"github.com/94peter/vulpes/log"
 
 	"github.com/gorilla/mux"
 	grpc_prometheus "github.com/grpc-ecosystem/go-grpc-prometheus"

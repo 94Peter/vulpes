@@ -16,7 +16,7 @@
 這是一個內部套件，可直接在您的專案中匯入：
 
 ```go
-import "github.com/arwoosa/vulpes/relation"
+import "github.com/94peter/vulpes/relation"
 ```
 
 ## 使用方法
@@ -26,7 +26,7 @@ import "github.com/arwoosa/vulpes/relation"
 在應用程式啟動時，使用 Keto 服務的地址初始化套件。
 
 ```go
-import "github.com/arwoosa/vulpes/relation"
+import "github.com/94peter/vulpes/relation"
 
 func main() {
     // 初始化 Keto 連線
@@ -51,7 +51,7 @@ func main() {
 import (
     "context"
     "log"
-    "github.com/arwoosa/vulpes/relation"
+    "github.com/94peter/vulpes/relation"
 )
 
 func AssignRole() {
@@ -77,7 +77,7 @@ func AssignRole() {
 import (
     "context"
     "log"
-    "github.com/arwoosa/vulpes/relation"
+    "github.com/94peter/vulpes/relation"
 )
 
 func CheckPermission() {

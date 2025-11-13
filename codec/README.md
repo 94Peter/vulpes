@@ -21,7 +21,7 @@ This can only be done once.
 ```go
 package main
 
-import "github.com/arwoosa/vulpes/codec"
+import "github.com/94peter/vulpes/codec"
 
 func main() {
     // Set MessagePack as the default codec for the application.
@@ -43,7 +43,7 @@ import (
 	"fmt"
 	"log"
 
-	"github.com/arwoosa/vulpes/codec"
+	"github.com/94peter/vulpes/codec"
 )
 
 // Define the data structure you want to work with.

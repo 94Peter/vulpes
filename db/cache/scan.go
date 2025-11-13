@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"strconv"
 
-	"github.com/arwoosa/vulpes/log"
+	"github.com/94peter/vulpes/log"
 )
 
 const (

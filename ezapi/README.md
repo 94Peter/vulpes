@@ -25,7 +25,7 @@ package api
 import (
 	"net/http"
 
-	"github.com/arwoosa/vulpes/ezapi"
+	"github.com/94peter/vulpes/ezapi"
 	"github.com/gin-gonic/gin"
 )
 
@@ -56,7 +56,7 @@ package main
 import (
 	"context"
 
-	"github.com/arwoosa/vulpes/ezapi"
+	"github.com/94peter/vulpes/ezapi"
 
 	// IMPORTANT: Import your routes package with a blank identifier
 	// to trigger its init() function for route registration.
@@ -85,7 +85,7 @@ package main
 
 import (
     "net/http"
-    "github.com/arwoosa/vulpes/ezapi"
+    "github.com/94peter/vulpes/ezapi"
     _ "your/project/path/api" // Don't forget to import for side effects
 )
 

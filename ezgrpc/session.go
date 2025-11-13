@@ -8,8 +8,8 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/arwoosa/vulpes/codec"
-	"github.com/arwoosa/vulpes/log"
+	"github.com/94peter/vulpes/codec"
+	"github.com/94peter/vulpes/log"
 
 	"github.com/gorilla/sessions"
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"

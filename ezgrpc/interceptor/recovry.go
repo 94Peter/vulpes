@@ -3,7 +3,7 @@
 package interceptor
 
 import (
-	"github.com/arwoosa/vulpes/log"
+	"github.com/94peter/vulpes/log"
 
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"

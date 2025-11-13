@@ -3,7 +3,7 @@ package session
 import (
 	"time"
 
-	"github.com/arwoosa/vulpes/db/mgo"
+	"github.com/94peter/vulpes/db/mgo"
 	"go.mongodb.org/mongo-driver/v2/bson"
 	"go.mongodb.org/mongo-driver/v2/mongo"
 	"go.mongodb.org/mongo-driver/v2/mongo/options"

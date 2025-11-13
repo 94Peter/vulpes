@@ -6,14 +6,14 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/arwoosa/vulpes/db/mgo"
+	"github.com/94peter/vulpes/db/mgo"
 	ginSession "github.com/gin-contrib/sessions"
 	"github.com/gorilla/securecookie"
 	"github.com/gorilla/sessions"
 	"go.mongodb.org/mongo-driver/v2/bson"
 	"go.mongodb.org/mongo-driver/v2/mongo/options"
 
-	mysession "github.com/arwoosa/vulpes/ezapi/session"
+	mysession "github.com/94peter/vulpes/ezapi/session"
 )
 
 func NewMongoStore(maxAge int, keyPairs ...[]byte) Store {

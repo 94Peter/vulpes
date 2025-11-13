@@ -63,7 +63,7 @@ formatters:
   settings:
     goimports:
       local-prefixes:
-        - github.com/arwoosa/vulpes
+        - github.com/94peter/vulpes
   exclusions:
     generated: lax
     paths:

@@ -12,8 +12,8 @@ import (
 	"github.com/gin-gonic/gin"
 	csrf "github.com/utrack/gin-csrf"
 
-	"github.com/arwoosa/vulpes/ezapi/session/store"
-	"github.com/arwoosa/vulpes/log"
+	"github.com/94peter/vulpes/ezapi/session/store"
+	"github.com/94peter/vulpes/log"
 )
 
 type config struct {

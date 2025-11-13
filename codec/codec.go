@@ -7,7 +7,7 @@ package codec
 import (
 	"fmt"
 
-	"github.com/arwoosa/vulpes/log"
+	"github.com/94peter/vulpes/log"
 )
 
 // Codec defines the interface for any encoding/decoding implementation.

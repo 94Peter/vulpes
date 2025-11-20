@@ -112,3 +112,11 @@ func IsCollectionExist(ctx context.Context, collectionName string) (bool, error)
 	}
 	return len(result) > 0, nil
 }
+
+func IsHealth(ctx context.Context) error {
+	err := dataStore.getClient().Ping(ctx, readpref.Primary())
+	if err != nil {
+		return errors.Join(ErrPingFailed, err)
+	}
+	return nil
+}

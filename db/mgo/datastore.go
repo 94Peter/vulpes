@@ -27,6 +27,7 @@ type Datastore interface {
 	getCollection(name string) *mongo.Collection
 	getDatabase() *mongo.Database
 	close(ctx context.Context) error
+	getClient() *mongo.Client
 }
 
 // BulkOperator defines the interface for the fluent bulk operation builder.
@@ -56,4 +57,8 @@ func (m *mongoStore) close(ctx context.Context) error {
 
 func (m *mongoStore) getDatabase() *mongo.Database {
 	return m.db
+}
+
+func (m *mongoStore) getClient() *mongo.Client {
+	return m.db.Client()
 }

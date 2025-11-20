@@ -113,6 +113,10 @@ func (m *MockDatastore) getDatabase() *mongo.Database {
 	return m.OnGetDatabase()
 }
 
+func (m *MockDatastore) getClient() *mongo.Client {
+	return nil
+}
+
 // Interface implementations for MockBulkOperator
 
 func (m *MockBulkOperator) InsertOne(doc DocInter) BulkOperator {

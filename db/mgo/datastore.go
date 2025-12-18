@@ -6,6 +6,9 @@ import (
 	"go.mongodb.org/mongo-driver/v2/bson"
 	"go.mongodb.org/mongo-driver/v2/mongo"
 	"go.mongodb.org/mongo-driver/v2/mongo/options"
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/codes"
+	"go.opentelemetry.io/otel/trace"
 )
 
 // Datastore defines the interface for all database operations.
@@ -23,11 +26,14 @@ type Datastore interface {
 	PipeFind(ctx context.Context, collection string, pipeline mongo.Pipeline) (*mongo.Cursor, error)
 	PipeFindOne(ctx context.Context, collection string, pipeline mongo.Pipeline) *mongo.SingleResult
 
+	Distinct(ctx context.Context, collectionName string, field string, filter any, opts ...options.Lister[options.DistinctOptions]) ([]bson.RawValue, error)
+
 	NewBulkOperation(cname string) BulkOperator
 	getCollection(name string) *mongo.Collection
 	getDatabase() *mongo.Database
 	close(ctx context.Context) error
 	getClient() *mongo.Client
+	startTraceSpan(ctx context.Context, name string, attributes ...attribute.KeyValue) (context.Context, trace.Span)
 }
 
 // BulkOperator defines the interface for the fluent bulk operation builder.
@@ -44,7 +50,8 @@ type BulkOperator interface {
 var dataStore Datastore
 
 type mongoStore struct {
-	db *mongo.Database
+	db     *mongo.Database
+	tracer trace.Tracer
 }
 
 func (m *mongoStore) getCollection(name string) *mongo.Collection {
@@ -61,4 +68,25 @@ func (m *mongoStore) getDatabase() *mongo.Database {
 
 func (m *mongoStore) getClient() *mongo.Client {
 	return m.db.Client()
+}
+
+const dbSystem = "mongodb"
+
+func (m *mongoStore) startTraceSpan(ctx context.Context, name string, attributes ...attribute.KeyValue) (context.Context, trace.Span) {
+	ctx, span := m.tracer.Start(ctx, name, trace.WithSpanKind(trace.SpanKindClient))
+	span.SetAttributes(
+		append([]attribute.KeyValue{
+			attribute.String("db.system", dbSystem),
+		}, attributes...)...,
+	)
+	return ctx, span
+}
+
+func spanErrorHandler(err error, span trace.Span) error {
+	if err != nil {
+		span.SetStatus(codes.Error, err.Error())
+	} else {
+		span.SetStatus(codes.Ok, "ok")
+	}
+	return err
 }

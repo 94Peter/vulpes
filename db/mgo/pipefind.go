@@ -6,6 +6,7 @@ import (
 
 	"go.mongodb.org/mongo-driver/v2/bson"
 	"go.mongodb.org/mongo-driver/v2/mongo"
+	"go.opentelemetry.io/otel/attribute"
 )
 
 type MgoAggregate interface {
@@ -17,16 +18,23 @@ func PipeFind[T MgoAggregate](ctx context.Context, aggr T, filter bson.M) ([]T, 
 	if dataStore == nil {
 		return nil, ErrNotConnected
 	}
-	sortCursor, err := dataStore.PipeFind(ctx, aggr.C(), aggr.GetPipeline(filter))
+	collectionName := aggr.C()
+	_, span := dataStore.startTraceSpan(ctx,
+		fmt.Sprintf("mongo.pipeFind.%s", collectionName),
+		attribute.String("db.collection", collectionName),
+		attribute.String("db.operation", "pipeFind"),
+	)
+	defer span.End()
+	sortCursor, err := dataStore.PipeFind(ctx, collectionName, aggr.GetPipeline(filter))
 	if err != nil {
-		return nil, fmt.Errorf("%w: %w", ErrReadFailed, err)
+		return nil, spanErrorHandler(fmt.Errorf("%w: %w", ErrReadFailed, err), span)
 	}
 	var slice []T
 	err = sortCursor.All(ctx, &slice)
 	if err != nil {
-		return nil, fmt.Errorf("%w: %w", ErrReadFailed, err)
+		return nil, spanErrorHandler(fmt.Errorf("%w: %w", ErrReadFailed, err), span)
 	}
-	return slice, nil
+	return slice, spanErrorHandler(nil, span)
 }
 
 func PipeFindOne[T MgoAggregate](ctx context.Context, aggr T, filter bson.M) error {

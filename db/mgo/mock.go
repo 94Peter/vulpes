@@ -9,6 +9,8 @@ import (
 	"go.mongodb.org/mongo-driver/v2/bson"
 	"go.mongodb.org/mongo-driver/v2/mongo"
 	"go.mongodb.org/mongo-driver/v2/mongo/options"
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/trace"
 )
 
 // SetDatastore replaces the default datastore with a mock for testing.
@@ -45,6 +47,8 @@ type MockDatastore struct {
 	OnGetCollection    func(name string) *mongo.Collection
 	OnGetDatabase      func() *mongo.Database
 	OnClose            func(ctx context.Context) error
+	OnDistinct         func(ctx context.Context, collectionName string, field string, filter any, opts ...options.Lister[options.DistinctOptions]) ([]bson.RawValue, error)
+	OnStartTraceSpan   func(ctx context.Context, name string, attributes ...attribute.KeyValue) (context.Context, trace.Span)
 }
 
 // MockBulkOperator is a mock implementation of the BulkOperator interface.
@@ -56,6 +60,9 @@ type MockBulkOperator struct {
 }
 
 // Interface implementations for MockDatastore
+func (m *MockDatastore) Distinct(ctx context.Context, collectionName string, field string, filter any, opts ...options.Lister[options.DistinctOptions]) ([]bson.RawValue, error) {
+	return m.OnDistinct(ctx, collectionName, field, filter, opts...)
+}
 
 func (m *MockDatastore) Save(ctx context.Context, doc DocInter) (DocInter, error) {
 	return m.OnSave(ctx, doc)
@@ -115,6 +122,10 @@ func (m *MockDatastore) getDatabase() *mongo.Database {
 
 func (m *MockDatastore) getClient() *mongo.Client {
 	return nil
+}
+
+func (m *MockDatastore) startTraceSpan(ctx context.Context, name string, attributes ...attribute.KeyValue) (context.Context, trace.Span) {
+	return m.OnStartTraceSpan(ctx, name, attributes...)
 }
 
 // Interface implementations for MockBulkOperator

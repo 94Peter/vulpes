@@ -12,6 +12,8 @@ import (
 	"go.mongodb.org/mongo-driver/v2/mongo"
 	"go.mongodb.org/mongo-driver/v2/mongo/options"
 	"go.mongodb.org/mongo-driver/v2/mongo/readpref"
+	"go.opentelemetry.io/otel/trace"
+	"go.opentelemetry.io/otel/trace/noop"
 )
 
 var once sync.Once
@@ -56,7 +58,7 @@ var isConnected bool
 // ctx: A context for the connection process.
 // dbName: The name of the database to connect to.
 // opts: A variadic set of Option functions for configuration.
-func InitConnection(ctx context.Context, dbName string, opts ...Option) error {
+func InitConnection(ctx context.Context, dbName string, tracer trace.Tracer, opts ...Option) error {
 	var err error
 	once.Do(func() {
 		var client *mongo.Client
@@ -83,8 +85,13 @@ func InitConnection(ctx context.Context, dbName string, opts ...Option) error {
 			return
 		}
 
+		if tracer == nil {
+			tracer = noop.NewTracerProvider().Tracer("mongo")
+		}
+
 		dataStore = &mongoStore{
-			db: client.Database(dbName),
+			db:     client.Database(dbName),
+			tracer: tracer,
 		}
 		isConnected = true
 	})

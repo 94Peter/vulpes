@@ -2,9 +2,12 @@ package mgo
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
+	"fmt"
 
 	"go.mongodb.org/mongo-driver/v2/bson"
+	"go.opentelemetry.io/otel/attribute"
 )
 
 // DeleteOne deletes a single document matching the filter.
@@ -13,7 +16,21 @@ func DeleteOne[T DocInter](ctx context.Context, doc T, filter bson.D) (int64, er
 	if dataStore == nil {
 		return 0, ErrNotConnected
 	}
-	return dataStore.DeleteOne(ctx, doc.C(), filter)
+	data, _ := json.Marshal(filter)
+	collectionName := doc.C()
+	_, span := dataStore.startTraceSpan(ctx,
+		fmt.Sprintf("mongo.deleteOne.%s", collectionName),
+		attribute.String("db.collection", collectionName),
+		attribute.String("db.operation", "deleteOne"),
+		attribute.String("db.statement", string(data)),
+	)
+	defer span.End()
+	affected, err := dataStore.DeleteOne(ctx, doc.C(), filter)
+	if err != nil {
+		return 0, spanErrorHandler(err, span)
+	}
+	span.SetAttributes(attribute.Int64("db.affected_number_of_documents", affected))
+	return affected, spanErrorHandler(nil, span)
 }
 
 // DeleteMany deletes all documents matching the filter.
@@ -22,7 +39,21 @@ func DeleteMany[T DocInter](ctx context.Context, doc T, filter bson.D) (int64, e
 	if dataStore == nil {
 		return 0, ErrNotConnected
 	}
-	return dataStore.DeleteMany(ctx, doc.C(), filter)
+	data, _ := json.Marshal(filter)
+	collectionName := doc.C()
+	_, span := dataStore.startTraceSpan(ctx,
+		fmt.Sprintf("mongo.deleteMany.%s", collectionName),
+		attribute.String("db.collection", collectionName),
+		attribute.String("db.operation", "deleteMany"),
+		attribute.String("db.statement", string(data)),
+	)
+	defer span.End()
+	affected, err := dataStore.DeleteMany(ctx, doc.C(), filter)
+	if err != nil {
+		return 0, spanErrorHandler(err, span)
+	}
+	span.SetAttributes(attribute.Int64("db.affected_number_of_documents", affected))
+	return affected, spanErrorHandler(nil, span)
 }
 
 // DeleteById deletes a single document identified by the _id of the provided document instance.

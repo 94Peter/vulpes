@@ -5,6 +5,9 @@ import (
 	"errors"
 	"fmt"
 	"reflect"
+
+	"go.mongodb.org/mongo-driver/v2/bson"
+	"go.opentelemetry.io/otel/attribute"
 )
 
 func Save[T DocInter](ctx context.Context, doc T) (T, error) {
@@ -12,15 +15,25 @@ func Save[T DocInter](ctx context.Context, doc T) (T, error) {
 	if dataStore == nil {
 		return zero, ErrNotConnected
 	}
+	collectionName := doc.C()
+	_, span := dataStore.startTraceSpan(ctx,
+		fmt.Sprintf("mongo.save.%s", collectionName),
+		attribute.String("db.collection", collectionName),
+		attribute.String("db.operation", "save"),
+	)
+	defer span.End()
 	newDoc, err := dataStore.Save(ctx, doc)
 	if err != nil {
-		return zero, fmt.Errorf("%w: %w", ErrWriteFailed, err)
+		return zero, spanErrorHandler(fmt.Errorf("%w: %w", ErrWriteFailed, err), span)
 	}
 	result, ok := newDoc.(T)
 	if !ok {
-		return zero, fmt.Errorf("%w: failed to cast to %T", ErrWriteFailed, doc)
+		return zero, spanErrorHandler(fmt.Errorf("%w: failed to cast to %T", ErrWriteFailed, doc), span)
 	}
-	return result, nil
+	if oid, ok := result.GetId().(bson.ObjectID); ok {
+		span.SetAttributes(attribute.String("db.inserted_id", oid.Hex()))
+	}
+	return result, spanErrorHandler(nil, span)
 }
 
 func (m *mongoStore) Save(ctx context.Context, doc DocInter) (DocInter, error) {

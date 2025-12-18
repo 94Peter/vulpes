@@ -6,6 +6,7 @@ import (
 
 	"go.mongodb.org/mongo-driver/v2/bson"
 	"go.mongodb.org/mongo-driver/v2/mongo/options"
+	"go.opentelemetry.io/otel/attribute"
 )
 
 // UpdateById updates a single document identified by the _id field of the provided document instance.
@@ -30,7 +31,20 @@ func UpdateOne[T DocInter](ctx context.Context, doc T, filter bson.D, update bso
 	if dataStore == nil {
 		return 0, ErrNotConnected
 	}
-	return dataStore.UpdateOne(ctx, doc.C(), filter, update)
+	collectionName := doc.C()
+	_, span := dataStore.startTraceSpan(ctx,
+		fmt.Sprintf("mongo.updateOne.%s", collectionName),
+		attribute.String("db.collection", collectionName),
+		attribute.String("db.operation", "updateOne"),
+		attribute.Stringer("db.statement", filter),
+	)
+	defer span.End()
+	affected, err := dataStore.UpdateOne(ctx, doc.C(), filter, update)
+	if err != nil {
+		return 0, spanErrorHandler(err, span)
+	}
+	span.SetAttributes(attribute.Int64("db.affected_number_of_documents", affected))
+	return affected, spanErrorHandler(nil, span)
 }
 
 func UpdateMany[T DocInter](ctx context.Context, doc T, filter bson.D, update bson.D) (int64, error) {

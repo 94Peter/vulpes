@@ -2,6 +2,7 @@ package mgo
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 
 	"go.mongodb.org/mongo-driver/v2/bson"
@@ -18,14 +19,17 @@ func PipeFind[T MgoAggregate](ctx context.Context, aggr T, filter bson.M) ([]T, 
 	if dataStore == nil {
 		return nil, ErrNotConnected
 	}
+	pipeline := aggr.GetPipeline(filter)
+	data, _ := json.Marshal(pipeline)
 	collectionName := aggr.C()
 	_, span := dataStore.startTraceSpan(ctx,
 		fmt.Sprintf("mongo.pipeFind.%s", collectionName),
 		attribute.String("db.collection", collectionName),
 		attribute.String("db.operation", "pipeFind"),
+		attribute.String("db.statement", string(data)),
 	)
 	defer span.End()
-	sortCursor, err := dataStore.PipeFind(ctx, collectionName, aggr.GetPipeline(filter))
+	sortCursor, err := dataStore.PipeFind(ctx, collectionName, pipeline)
 	if err != nil {
 		return nil, spanErrorHandler(fmt.Errorf("%w: %w", ErrReadFailed, err), span)
 	}
@@ -41,7 +45,17 @@ func PipeFindOne[T MgoAggregate](ctx context.Context, aggr T, filter bson.M) err
 	if dataStore == nil {
 		return ErrNotConnected
 	}
-	err := dataStore.PipeFindOne(ctx, aggr.C(), aggr.GetPipeline(filter)).Decode(&aggr)
+	pipeline := aggr.GetPipeline(filter)
+	data, _ := json.Marshal(pipeline)
+	collectionName := aggr.C()
+	_, span := dataStore.startTraceSpan(ctx,
+		fmt.Sprintf("mongo.pipeFind.%s", collectionName),
+		attribute.String("db.collection", collectionName),
+		attribute.String("db.operation", "pipeFind"),
+		attribute.String("db.statement", string(data)),
+	)
+	defer span.End()
+	err := dataStore.PipeFindOne(ctx, collectionName, pipeline).Decode(&aggr)
 	if err != nil {
 		return fmt.Errorf("%w: %w", ErrReadFailed, err)
 	}

@@ -1,5 +1,7 @@
 package storage
 
+import "go.opentelemetry.io/otel/trace"
+
 type Option func(*r2Config)
 
 func WithEndpoint(endpoint string) Option {
@@ -23,5 +25,11 @@ func WithSecretKey(secretKey string) Option {
 func WithBucket(bucket string) Option {
 	return func(c *r2Config) {
 		c.r2BucketName = bucket
+	}
+}
+
+func withTracer(tracer trace.Tracer) Option {
+	return func(rc *r2Config) {
+		rc.tracer = tracer
 	}
 }

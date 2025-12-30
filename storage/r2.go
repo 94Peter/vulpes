@@ -10,6 +10,8 @@ import (
 	"github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/credentials"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/trace"
 )
 
 type r2Config struct {
@@ -18,6 +20,7 @@ type r2Config struct {
 	r2SecretAccessKey string
 	r2Region          string
 	r2BucketName      string
+	tracer            trace.Tracer
 }
 
 var defaultR2Config = r2Config{
@@ -70,15 +73,22 @@ func newR2Storage(ctx context.Context, opts ...Option) (*r2Storage, error) {
 	return &r2Storage{
 		client: client,
 		bucket: defaultR2Config.r2BucketName,
+		tracer: defaultR2Config.tracer,
 	}, nil
 }
 
 type r2Storage struct {
 	client *s3.Client
 	bucket string
+	tracer trace.Tracer
 }
 
 func (r *r2Storage) Upload(ctx context.Context, key string, body io.Reader, contentType string) error {
+	ctx, span := r.startTraceSpan(ctx, "storage.upload", attribute.String("storage.func", "Upload"))
+	defer span.End()
+	span.SetAttributes(attribute.String("storage.bucket", r.bucket))
+	span.SetAttributes(attribute.String("storage.key", key))
+	span.SetAttributes(attribute.String("storage.contentType", contentType))
 	uploadInput := &s3.PutObjectInput{
 		Bucket:      aws.String(r.bucket),
 		Key:         aws.String(key),
@@ -86,10 +96,12 @@ func (r *r2Storage) Upload(ctx context.Context, key string, body io.Reader, cont
 		ContentType: aws.String(contentType),
 	}
 	_, err := r.client.PutObject(ctx, uploadInput)
-	return err
+	return spanErrorHandler(err, span)
 }
 
 func (r *r2Storage) SignedDownloadUrl(ctx context.Context, key string, expires time.Duration) (string, error) {
+	ctx, span := r.startTraceSpan(ctx, "storage.signed_download_url", attribute.String("storage.func", "SignedDownloadUrl"))
+	defer span.End()
 	// 創建一個 PresignClient
 	presigner := s3.NewPresignClient(r.client)
 	// 設定預簽名 GetObject 的輸入參數
@@ -98,11 +110,26 @@ func (r *r2Storage) SignedDownloadUrl(ctx context.Context, key string, expires t
 		Bucket: aws.String(r.bucket),
 		Key:    aws.String(key),
 	}
+	span.SetAttributes(attribute.String("storage.bucket", r.bucket))
+	span.SetAttributes(attribute.String("storage.key", key))
 	resp, err := presigner.PresignGetObject(ctx, input, func(opts *s3.PresignOptions) {
 		opts.Expires = expires
 	})
 	if err != nil {
-		return "", err
+		return "", spanErrorHandler(err, span)
 	}
-	return resp.URL, nil
+	span.SetAttributes(attribute.String("storage.url", resp.URL))
+	return resp.URL, spanErrorHandler(nil, span)
+}
+
+var r2StorageService = "cloudflare_r2"
+
+func (r *r2Storage) startTraceSpan(ctx context.Context, name string, attributes ...attribute.KeyValue) (context.Context, trace.Span) {
+	ctx, span := r.tracer.Start(ctx, name, trace.WithSpanKind(trace.SpanKindClient))
+	span.SetAttributes(
+		append([]attribute.KeyValue{
+			attribute.String("storage.service", r2StorageService),
+		}, attributes...)...,
+	)
+	return ctx, span
 }

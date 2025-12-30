@@ -47,3 +47,9 @@ func WithStaticFS(path string, fs http.FileSystem) option {
 		c.StaticFS[path] = fs
 	}
 }
+
+func WithTracerEnable(enable bool) option {
+	return func(c *config) {
+		c.Tracer.Enable = enable
+	}
+}

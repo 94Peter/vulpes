@@ -71,7 +71,7 @@ func (m *mongoStore) New(r *http.Request, name string) (*sessions.Session, error
 	if cook, errToken := m.Token.GetToken(r, name); errToken == nil {
 		err = securecookie.DecodeMulti(name, cook, &session.ID, m.Codecs...)
 		if err == nil {
-			err = m.load(session)
+			err = m.load(r.Context(), session)
 			if err == nil {
 				session.IsNew = false
 			} else {
@@ -84,7 +84,7 @@ func (m *mongoStore) New(r *http.Request, name string) (*sessions.Session, error
 
 // Save should persist session to the underlying store implementation.
 func (m *mongoStore) Save(r *http.Request, w http.ResponseWriter, session *sessions.Session) error {
-	ctx, cancel := context.WithTimeout(context.Background(), time.Second*2)
+	ctx, cancel := context.WithTimeout(r.Context(), time.Second*2)
 	defer cancel()
 	if session.Options.MaxAge < 0 {
 		if err := m.delete(ctx, session); err != nil {
@@ -112,12 +112,12 @@ func (m *mongoStore) Save(r *http.Request, w http.ResponseWriter, session *sessi
 	return nil
 }
 
-func (m *mongoStore) load(session *sessions.Session) error {
+func (m *mongoStore) load(ctx context.Context, session *sessions.Session) error {
 	oid, err := bson.ObjectIDFromHex(session.ID)
 	if err != nil {
 		return err
 	}
-	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
+	ctx, cancel := context.WithTimeout(ctx, time.Second)
 	defer cancel()
 	s := mysession.NewSession(mysession.WithId(oid))
 	err = mgo.FindById(ctx, s)

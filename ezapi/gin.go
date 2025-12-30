@@ -11,6 +11,7 @@ import (
 	"github.com/gin-contrib/sessions"
 	"github.com/gin-gonic/gin"
 	csrf "github.com/utrack/gin-csrf"
+	"go.opentelemetry.io/contrib/instrumentation/github.com/gin-gonic/gin/otelgin"
 
 	"github.com/94peter/vulpes/ezapi/session/store"
 	"github.com/94peter/vulpes/log"
@@ -33,6 +34,17 @@ type config struct {
 	}
 	StaticFS    map[string]http.FileSystem
 	Middlewares []gin.HandlerFunc
+	Tracer      struct {
+		Enable bool
+	}
+}
+
+func (c *config) appendMiddlewares(mids ...gin.HandlerFunc) {
+	c.Middlewares = append(c.Middlewares, mids...)
+}
+
+func (c *config) prependMiddlewares(mids ...gin.HandlerFunc) {
+	c.Middlewares = append(mids, c.Middlewares...)
 }
 
 var (
@@ -64,6 +76,9 @@ var (
 		}{},
 		Middlewares: defaultMiddelware,
 		StaticFS:    make(map[string]http.FileSystem),
+		Tracer: struct{ Enable bool }{
+			Enable: false,
+		},
 	}
 	sessionInjectors []SessionStoreInjector
 )
@@ -120,14 +135,7 @@ func server(cfg *config) *http.Server {
 		for _, injector := range sessionInjectors {
 			injector.InjectSessionStore(myStore, cfg.Session.CookieName)
 		}
-
-		cfg.Middlewares = append(
-			[]gin.HandlerFunc{
-				sessions.Sessions(cfg.Session.CookieName, myStore),
-			},
-			cfg.Middlewares...,
-		)
-
+		cfg.prependMiddlewares(sessions.Sessions(cfg.Session.CookieName, myStore))
 	}
 
 	if cfg.CSRF.Enable {
@@ -140,7 +148,7 @@ func server(cfg *config) *http.Server {
 		if cfg.CSRF.FieldName == "" {
 			panic("csrf field name is required")
 		}
-		cfg.Middlewares = append(cfg.Middlewares,
+		cfg.appendMiddlewares(
 			csrfProtectionWithExclusion(
 				csrf.Middleware(
 					csrf.Options{
@@ -161,7 +169,9 @@ func server(cfg *config) *http.Server {
 				c.Next()
 			},
 		)
-		// cfg.Middlewares = append(cfg.Middlewares, csrfProtectionWithExclusion(protect, cfg.CSRF.ExcludePaths))
+	}
+	if cfg.Tracer.Enable {
+		cfg.prependMiddlewares(otelgin.Middleware("API Server"))
 	}
 	initEngin(cfg)
 

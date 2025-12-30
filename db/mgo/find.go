@@ -3,12 +3,14 @@ package mgo
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 
 	"go.mongodb.org/mongo-driver/v2/bson"
 	"go.mongodb.org/mongo-driver/v2/mongo"
 	"go.mongodb.org/mongo-driver/v2/mongo/options"
 	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/codes"
 )
 
 func Find[T DocInter](ctx context.Context, doc T, filter any, opts ...options.Lister[options.FindOptions]) ([]T, error) {
@@ -26,6 +28,10 @@ func Find[T DocInter](ctx context.Context, doc T, filter any, opts ...options.Li
 	defer span.End()
 	result, err := dataStore.Find(ctx, doc.C(), filter, opts...)
 	if err != nil {
+		if errors.Is(err, mongo.ErrNoDocuments) {
+			span.SetStatus(codes.Ok, "ok")
+			return nil, err
+		}
 		return nil, spanErrorHandler(fmt.Errorf("%w: %w", ErrReadFailed, err), span)
 	}
 	var ret []T
@@ -51,6 +57,10 @@ func FindOne[T DocInter](ctx context.Context, doc T, filter any, opts ...options
 	defer span.End()
 	err := dataStore.FindOne(ctx, doc.C(), filter, opts...).Decode(&doc)
 	if err != nil {
+		if errors.Is(err, mongo.ErrNoDocuments) {
+			span.SetStatus(codes.Ok, "ok")
+			return err
+		}
 		return spanErrorHandler(fmt.Errorf("%w: %w", ErrReadFailed, err), span)
 	}
 	return spanErrorHandler(nil, span)

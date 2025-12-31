@@ -126,7 +126,9 @@ func SetServeMuxOpts(opts ...runtime.ServeMuxOption) {
 }
 
 // RegisterHandlerFromEndpointFunc is a function type for registering gRPC endpoint handlers.
-type RegisterHandlerFromEndpointFunc func(ctx context.Context, mux *runtime.ServeMux, endpoint string, opts []grpc.DialOption) (err error)
+type RegisterHandlerFromEndpointFunc func(
+	ctx context.Context, mux *runtime.ServeMux, endpoint string, opts []grpc.DialOption,
+) (err error)
 
 // RegisterHandlerFromEndpoint adds a handler registration function to the list of handlers to be executed.
 func RegisterHandlerFromEndpoint(f RegisterHandlerFromEndpointFunc) {

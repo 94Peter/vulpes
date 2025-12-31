@@ -41,13 +41,19 @@ func TestGenerateUUIDFromString(t *testing.T) {
 
 func TestInitClientAndSave(t *testing.T) {
 	t.Run("InvalidHost", func(t *testing.T) {
-		testClass := NewModelsClassBuilder("Test", "This is just test calss").AddProperty("name", "string", "The name of the test").AddProperty("age", "int", "The age of the test").Apply()
+		testClass := NewModelsClassBuilder("Test", "This is just test calss").
+			AddProperty("name", "string", "The name of the test").
+			AddProperty("age", "int", "The age of the test").Apply()
 		AddModelsClass(testClass)
-		sdk, err := InitClient(context.Background(), "bqlmpphnta62iw0p8zdcjw.c0.asia-southeast1.gcp.weaviate.cloud", "bWtaUzRraVRacS9hVlBWdl8zdnhjMWl5bmpqNkEva1FPSjV0Vm9TcHhnak1qSWtZb2pmNDF3M0pBQko0PV92MjAw")
+		sdk, err := InitClient(
+			t.Context(),
+			"bqlmpphnta62iw0p8zdcjw.c0.asia-southeast1.gcp.weaviate.cloud",
+			"bWtaUzRraVRacS9hVlBWdl8zdnhjMWl5bmpqNkEva1FPSjV0Vm9TcHhnak1qSWtZb2pmNDF3M0pBQko0PV92MjAw",
+		)
 		if err != nil {
 			t.Fatal(err)
 		}
-		sdk.FindRelated(context.Background(), "Curse", "畢氏定理")
+		sdk.FindRelated(t.Context(), "Curse", "畢氏定理")
 		assert.False(t, true)
 		// sdk.CreateOrUpdateData(context.Background(), &TestData{Name: "test", Age: 10})
 	})

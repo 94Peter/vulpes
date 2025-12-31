@@ -31,27 +31,6 @@ func (*mockClient) GetServiceInvoker(_ context.Context, _, _ string) (client.Ser
 	return nil, nil
 }
 
-// func TestRealInvoke(t *testing.T) {
-// 	ctx := context.Background()
-// 	// req := map[string]any{
-// 	// 	"id":      "c2c8ea6c-e453-4805-455f-ad2079e02800",
-// 	// 	"variant": "public",
-// 	// }
-// 	type imageRequest struct {
-// 		ID      string `json:"id"`
-// 		Variant string `json:"variant"`
-// 	}
-// 	type imageResponse struct {
-// 		URI string `json:"uri"`
-// 	}
-// 	resp, err := Invoke[*imageRequest, imageResponse](ctx, "localhost:8081", "mediaService.ImageService", "GetImageURI", &imageRequest{
-// 		ID:      "c2c8ea6c-e453-4805-455f-ad2079e02800",
-// 		Variant: "public",
-// 	})
-// 	fmt.Println(resp, err)
-// 	assert.False(t, true)
-// }
-
 func TestInvoke(t *testing.T) {
 	originalClient := grpcClt
 	defer func() {
@@ -70,7 +49,8 @@ func TestInvoke(t *testing.T) {
 		// Call the function
 		ctx := context.Background()
 		req := map[string]any{"data": "some-data"}
-		resp, err := Invoke[map[string]any, map[string]any](ctx, "localhost:8081", "mediaService.ImageService", "SyncImageCount", req)
+		resp, err := Invoke[map[string]any, map[string]any](
+			ctx, "localhost:8081", "mediaService.ImageService", "SyncImageCount", req)
 
 		// Assertions
 		require.NoError(t, err)
@@ -88,7 +68,8 @@ func TestInvoke(t *testing.T) {
 		// Call the function
 		ctx := context.Background()
 		req := map[string]any{"data": "some-data"}
-		_, err := Invoke[map[string]any, map[string]any](ctx, "localhost:8081", "mediaService.ImageService", "SyncImageCount", req)
+		_, err := Invoke[map[string]any, map[string]any](
+			ctx, "localhost:8081", "mediaService.ImageService", "SyncImageCount", req)
 
 		// Assertions
 		require.Error(t, err)
@@ -105,7 +86,8 @@ func TestInvoke(t *testing.T) {
 		// Call the function
 		ctx := context.Background()
 		req := map[string]any{"data": "some-data"}
-		_, err := Invoke[map[string]any, map[string]any](ctx, "localhost:8081", "mediaService.ImageService", "SyncImageCount", req)
+		_, err := Invoke[map[string]any, map[string]any](
+			ctx, "localhost:8081", "mediaService.ImageService", "SyncImageCount", req)
 
 		// Assertions
 		require.Error(t, err)

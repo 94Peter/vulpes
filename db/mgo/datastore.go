@@ -15,18 +15,33 @@ import (
 // It allows for mocking the entire package for testing purposes.
 type Datastore interface {
 	Save(ctx context.Context, doc DocInter) (DocInter, error)
-	Find(ctx context.Context, collection string, filter any, opts ...options.Lister[options.FindOptions]) (*mongo.Cursor, error)
-	FindOne(ctx context.Context, collection string, filter any, opts ...options.Lister[options.FindOneOptions]) *mongo.SingleResult
-	UpdateOne(ctx context.Context, collection string, filter bson.D, update bson.D, opts ...options.Lister[options.UpdateOneOptions]) (int64, error)
+	Find(
+		ctx context.Context, collection string, filter any,
+		opts ...options.Lister[options.FindOptions],
+	) (*mongo.Cursor, error)
+	FindOne(
+		ctx context.Context, collection string, filter any,
+		opts ...options.Lister[options.FindOneOptions],
+	) *mongo.SingleResult
+	UpdateOne(
+		ctx context.Context, collection string, filter bson.D, update bson.D,
+		opts ...options.Lister[options.UpdateOneOptions],
+	) (int64, error)
 	UpdateMany(ctx context.Context, collection string, filter bson.D, update bson.D) (int64, error)
 	DeleteOne(ctx context.Context, collection string, filter bson.D) (int64, error)
 	DeleteMany(ctx context.Context, collection string, filter bson.D) (int64, error)
-	ReplaceOne(ctx context.Context, collection string, filter any, replacement any, opts ...options.Lister[options.ReplaceOptions]) (*mongo.UpdateResult, error)
+	ReplaceOne(
+		ctx context.Context, collection string, filter any, replacement any,
+		opts ...options.Lister[options.ReplaceOptions],
+	) (*mongo.UpdateResult, error)
 
 	PipeFind(ctx context.Context, collection string, pipeline mongo.Pipeline) (*mongo.Cursor, error)
 	PipeFindOne(ctx context.Context, collection string, pipeline mongo.Pipeline) *mongo.SingleResult
 
-	Distinct(ctx context.Context, collectionName string, field string, filter any, opts ...options.Lister[options.DistinctOptions]) ([]bson.RawValue, error)
+	Distinct(
+		ctx context.Context, collectionName string, field string, filter any,
+		opts ...options.Lister[options.DistinctOptions],
+	) ([]bson.RawValue, error)
 
 	NewBulkOperation(cname string) BulkOperator
 	getCollection(name string) *mongo.Collection
@@ -72,7 +87,9 @@ func (m *mongoStore) getClient() *mongo.Client {
 
 const dbSystem = "mongodb"
 
-func (m *mongoStore) startTraceSpan(ctx context.Context, name string, attributes ...attribute.KeyValue) (context.Context, trace.Span) {
+func (m *mongoStore) startTraceSpan(
+	ctx context.Context, name string, attributes ...attribute.KeyValue,
+) (context.Context, trace.Span) {
 	ctx, span := m.tracer.Start(ctx, name, trace.WithSpanKind(trace.SpanKindClient))
 	span.SetAttributes(
 		append([]attribute.KeyValue{

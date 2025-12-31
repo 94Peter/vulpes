@@ -9,7 +9,10 @@ import (
 	"go.opentelemetry.io/otel/attribute"
 )
 
-func Distinct[T any](ctx context.Context, collectionName string, field string, filter any, opts ...options.Lister[options.DistinctOptions]) ([]T, error) {
+func Distinct[T any](
+	ctx context.Context, collectionName string, field string, filter any,
+	opts ...options.Lister[options.DistinctOptions],
+) ([]T, error) {
 	if dataStore == nil {
 		return nil, ErrNotConnected
 	}
@@ -36,7 +39,10 @@ func Distinct[T any](ctx context.Context, collectionName string, field string, f
 	return ret, spanErrorHandler(nil, span)
 }
 
-func (m *mongoStore) Distinct(ctx context.Context, collectionName string, field string, filter any, opts ...options.Lister[options.DistinctOptions]) ([]bson.RawValue, error) {
+func (m *mongoStore) Distinct(
+	ctx context.Context, collectionName string, field string, filter any,
+	opts ...options.Lister[options.DistinctOptions],
+) ([]bson.RawValue, error) {
 	collection := m.getCollection(collectionName)
 	result := collection.Distinct(ctx, field, filter, opts...)
 	rows, err := result.Raw()

@@ -13,7 +13,10 @@ import (
 	"go.opentelemetry.io/otel/codes"
 )
 
-func Find[T DocInter](ctx context.Context, doc T, filter any, opts ...options.Lister[options.FindOptions]) ([]T, error) {
+func Find[T DocInter](
+	ctx context.Context, doc T, filter any,
+	opts ...options.Lister[options.FindOptions],
+) ([]T, error) {
 	if dataStore == nil {
 		return nil, ErrNotConnected
 	}
@@ -42,7 +45,10 @@ func Find[T DocInter](ctx context.Context, doc T, filter any, opts ...options.Li
 	return ret, spanErrorHandler(nil, span)
 }
 
-func FindOne[T DocInter](ctx context.Context, doc T, filter any, opts ...options.Lister[options.FindOneOptions]) error {
+func FindOne[T DocInter](
+	ctx context.Context, doc T, filter any,
+	opts ...options.Lister[options.FindOneOptions],
+) error {
 	if dataStore == nil {
 		return ErrNotConnected
 	}
@@ -73,7 +79,10 @@ func FindById[T DocInter](ctx context.Context, doc T) error {
 	return FindOne(ctx, doc, bson.M{"_id": doc.GetId()})
 }
 
-func (m *mongoStore) Find(ctx context.Context, collectionName string, filter any, opts ...options.Lister[options.FindOptions]) (*mongo.Cursor, error) {
+func (m *mongoStore) Find(
+	ctx context.Context, collectionName string, filter any,
+	opts ...options.Lister[options.FindOptions],
+) (*mongo.Cursor, error) {
 	collection := m.getCollection(collectionName)
 	cursor, err := collection.Find(ctx, filter, opts...)
 	if err != nil {
@@ -82,7 +91,10 @@ func (m *mongoStore) Find(ctx context.Context, collectionName string, filter any
 	return cursor, nil
 }
 
-func (m *mongoStore) FindOne(ctx context.Context, collectionName string, filter any, opts ...options.Lister[options.FindOneOptions]) *mongo.SingleResult {
+func (m *mongoStore) FindOne(
+	ctx context.Context, collectionName string, filter any,
+	opts ...options.Lister[options.FindOneOptions],
+) *mongo.SingleResult {
 	collection := m.getCollection(collectionName)
 	return collection.FindOne(ctx, filter, opts...)
 }

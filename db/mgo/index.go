@@ -78,7 +78,10 @@ func SyncIndexes(ctx context.Context) error {
 		_, err := indexView.CreateMany(ctx, index.Indexes())
 		if err != nil {
 			// Wrap the error for better context.
-			return fmt.Errorf("failed to create indexes for collection '%s': %w", index.C(), errors.Join(ErrCreateIndexFailed, err))
+			return fmt.Errorf(
+				"failed to create indexes for collection '%s': %w",
+				index.C(), errors.Join(ErrCreateIndexFailed, err),
+			)
 		}
 	}
 

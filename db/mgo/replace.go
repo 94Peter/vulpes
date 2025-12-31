@@ -10,7 +10,10 @@ import (
 	"go.opentelemetry.io/otel/attribute"
 )
 
-func ReplaceOne[T DocInter](ctx context.Context, doc T, filter any, opts ...options.Lister[options.ReplaceOptions]) (int64, error) {
+func ReplaceOne[T DocInter](
+	ctx context.Context, doc T, filter any,
+	opts ...options.Lister[options.ReplaceOptions],
+) (int64, error) {
 	if dataStore == nil {
 		return 0, ErrNotConnected
 	}
@@ -31,6 +34,9 @@ func ReplaceOne[T DocInter](ctx context.Context, doc T, filter any, opts ...opti
 	return result.UpsertedCount, spanErrorHandler(nil, span)
 }
 
-func (m *mongoStore) ReplaceOne(ctx context.Context, collection string, filter any, replacement any, opts ...options.Lister[options.ReplaceOptions]) (*mongo.UpdateResult, error) {
+func (m *mongoStore) ReplaceOne(
+	ctx context.Context, collection string, filter any, replacement any,
+	opts ...options.Lister[options.ReplaceOptions],
+) (*mongo.UpdateResult, error) {
 	return m.getCollection(collection).ReplaceOne(ctx, filter, replacement, opts...)
 }

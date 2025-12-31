@@ -8,9 +8,9 @@ import (
 
 type option func(*config)
 
-func WithPort(port int) option {
+func WithPort(port uint16) option {
 	return func(c *config) {
-		c.Port = uint16(port)
+		c.Port = port
 	}
 }
 

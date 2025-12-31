@@ -127,7 +127,10 @@ func Write(out io.Writer, data CSVMarshaler, opts ...Option) error {
 	return nil
 }
 
-func Upload(ctx context.Context, storage storage.Storage, key string, data CSVMarshaler, opts ...Option) (string, error) {
+func Upload(
+	ctx context.Context, storage storage.Storage, key string,
+	data CSVMarshaler, opts ...Option,
+) (string, error) {
 	buf := &bytes.Buffer{}
 	err := Write(buf, data, opts...)
 	if err != nil {

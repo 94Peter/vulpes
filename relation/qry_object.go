@@ -27,7 +27,9 @@ func (o *queryObjectResp) AddObject(namespace, object string) {
 	})
 }
 
-func QueryObjectBySubjectIdRelation(ctx context.Context, namespace, subjectId, relation string) (*queryObjectResp, error) {
+func QueryObjectBySubjectIdRelation(
+	ctx context.Context, namespace, subjectId, relation string,
+) (*queryObjectResp, error) {
 	if readconn == nil {
 		return nil, ErrReadConnectNotInitialed
 	}
@@ -62,7 +64,8 @@ func QueryObjectBySubjectIdRelation(ctx context.Context, namespace, subjectId, r
 	return result, nil
 }
 
-func QueryObjectBySubjectSetRelation(ctx context.Context, namespace, subjectNamespace, subjectObject, relation string) (*queryObjectResp, error) {
+func QueryObjectBySubjectSetRelation(
+	ctx context.Context, namespace, subjectNamespace, subjectObject, relation string) (*queryObjectResp, error) {
 	if readconn == nil {
 		return nil, ErrReadConnectNotInitialed
 	}

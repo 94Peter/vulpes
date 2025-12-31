@@ -7,7 +7,11 @@ import (
 	pb "github.com/ory/keto/proto/ory/keto/relation_tuples/v1alpha2"
 )
 
-func Check(ctx context.Context, namespace, object, relation string, subjectNamespace, subjectObject string) (bool, error) {
+func Check(
+	ctx context.Context,
+	namespace, object, relation string,
+	subjectNamespace, subjectObject string,
+) (bool, error) {
 	if readconn == nil {
 		return false, ErrReadConnectNotInitialed
 	}

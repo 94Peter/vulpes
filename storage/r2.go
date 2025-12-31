@@ -100,7 +100,11 @@ func (r *r2Storage) Upload(ctx context.Context, key string, body io.Reader, cont
 }
 
 func (r *r2Storage) SignedDownloadUrl(ctx context.Context, key string, expires time.Duration) (string, error) {
-	ctx, span := r.startTraceSpan(ctx, "storage.signed_download_url", attribute.String("storage.func", "SignedDownloadUrl"))
+	ctx, span := r.startTraceSpan(
+		ctx,
+		"storage.signed_download_url",
+		attribute.String("storage.func", "SignedDownloadUrl"),
+	)
 	defer span.End()
 	// 創建一個 PresignClient
 	presigner := s3.NewPresignClient(r.client)
@@ -124,7 +128,11 @@ func (r *r2Storage) SignedDownloadUrl(ctx context.Context, key string, expires t
 
 var r2StorageService = "cloudflare_r2"
 
-func (r *r2Storage) startTraceSpan(ctx context.Context, name string, attributes ...attribute.KeyValue) (context.Context, trace.Span) {
+func (r *r2Storage) startTraceSpan(
+	ctx context.Context,
+	name string,
+	attributes ...attribute.KeyValue,
+) (context.Context, trace.Span) {
 	ctx, span := r.tracer.Start(ctx, name, trace.WithSpanKind(trace.SpanKindClient))
 	span.SetAttributes(
 		append([]attribute.KeyValue{

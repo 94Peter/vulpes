@@ -116,7 +116,10 @@ func TestFindById(t *testing.T) {
 
 	mockDB := &mgo.MockDatastore{
 		// We mock FindOne because FindById calls it internally.
-		OnFindOne: func(_ context.Context, _ string, filter any, _ ...options.Lister[options.FindOneOptions]) *mongo.SingleResult {
+		OnFindOne: func(
+			_ context.Context, _ string, filter any,
+			_ ...options.Lister[options.FindOneOptions],
+		) *mongo.SingleResult {
 			// Assert that the filter passed by FindById is correct.
 			filterMap := filter.(bson.M)
 			assert.Equal(t, userID, filterMap["_id"])

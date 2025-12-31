@@ -40,7 +40,9 @@ var (
 	// validateUnaryInterceptor is a gRPC unary server interceptor that automatically validates incoming requests.
 	// It checks if the request message implements the validator interface and, if so, runs the validation.
 	// If validation fails, it returns a gRPC error with detailed information about the validation failures.
-	validateUnaryInterceptor grpc.UnaryServerInterceptor = func(ctx context.Context, req any, _ *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (any, error) {
+	validateUnaryInterceptor grpc.UnaryServerInterceptor = func(
+		ctx context.Context, req any, _ *grpc.UnaryServerInfo, handler grpc.UnaryHandler,
+	) (any, error) {
 		// Check if the request implements the Validator interface
 		if !enableValidate {
 			return handler(ctx, req)
@@ -97,7 +99,7 @@ var (
 		stWithDetails, err := st.WithDetails(br)
 		if err != nil {
 			// If attaching details fails (e.g., due to size), fall back to a simple InvalidArgument error
-			return nil, status.Errorf(codes.InvalidArgument, "Validation failed: %s", err.Error()) // Use the original error string
+			return nil, status.Errorf(codes.InvalidArgument, "Validation failed: %s", err.Error())
 		}
 		// Return the gRPC error with details
 		return nil, stWithDetails.Err()

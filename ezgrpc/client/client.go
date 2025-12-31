@@ -77,7 +77,9 @@ func (c *client) Close() error {
 func (c *client) Invoke(ctx context.Context, addr, service, method string, jsonbody []byte) ([]byte, error) {
 	serviceInvoker, err := c.GetServiceInvoker(ctx, addr, service)
 	if err != nil {
-		return nil, fmt.Errorf("%w:failed to get gRPC service info for service '%s' at '%s': %w", ErrServiceNotFound, service, addr, err)
+		return nil, fmt.Errorf(
+			"%w:failed to get gRPC service info for service '%s' at '%s': %w",
+			ErrServiceNotFound, service, addr, err)
 	}
 	return serviceInvoker.Invoke(ctx, method, jsonbody)
 }
@@ -147,7 +149,9 @@ func (c *client) getOrCreateConn(address string) (*grpc.ClientConn, error) {
 	return conn, nil
 }
 
-func (*client) fetchServiceInfoFromServer(ctx context.Context, conn *grpc.ClientConn, serviceName string) (*serviceInfo, error) {
+func (*client) fetchServiceInfoFromServer(
+	ctx context.Context, conn *grpc.ClientConn, serviceName string,
+) (*serviceInfo, error) {
 	reflectClient := rppb.NewServerReflectionClient(conn)
 	stream, err := reflectClient.ServerReflectionInfo(ctx, grpc.WaitForReady(true))
 	if err != nil {
@@ -186,7 +190,10 @@ func (*client) fetchServiceInfoFromServer(ctx context.Context, conn *grpc.Client
 }
 
 // parseServiceDescriptor parses file descriptors to extract metadata for a specific service.
-func parseServiceDescriptor(fileDescriptorProtos []*descriptorpb.FileDescriptorProto, serviceName string) (*serviceInfo, error) {
+func parseServiceDescriptor(
+	fileDescriptorProtos []*descriptorpb.FileDescriptorProto,
+	serviceName string,
+) (*serviceInfo, error) {
 	files, err := protodesc.NewFiles(&descriptorpb.FileDescriptorSet{File: fileDescriptorProtos})
 	if err != nil {
 		return nil, fmt.Errorf("failed to create file descriptor from response: %w", err)

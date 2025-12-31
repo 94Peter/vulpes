@@ -8,7 +8,18 @@ import (
 
 	"go.mongodb.org/mongo-driver/v2/bson"
 	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/trace"
 )
+
+func getDeleteSpan(ctx context.Context, collection, operation string, filter bson.D) (context.Context, trace.Span) {
+	data, _ := json.Marshal(filter)
+	return dataStore.startTraceSpan(ctx,
+		fmt.Sprintf("mongo.deleteOne.%s", collection),
+		attribute.String("db.collection", collection),
+		attribute.String("db.operation", operation),
+		attribute.String("db.statement", string(data)),
+	)
+}
 
 // DeleteOne deletes a single document matching the filter.
 // doc: An instance of the document type, used to determine the collection.
@@ -16,14 +27,7 @@ func DeleteOne[T DocInter](ctx context.Context, doc T, filter bson.D) (int64, er
 	if dataStore == nil {
 		return 0, ErrNotConnected
 	}
-	data, _ := json.Marshal(filter)
-	collectionName := doc.C()
-	_, span := dataStore.startTraceSpan(ctx,
-		fmt.Sprintf("mongo.deleteOne.%s", collectionName),
-		attribute.String("db.collection", collectionName),
-		attribute.String("db.operation", "deleteOne"),
-		attribute.String("db.statement", string(data)),
-	)
+	_, span := getDeleteSpan(ctx, doc.C(), "deleteOne", filter)
 	defer span.End()
 	affected, err := dataStore.DeleteOne(ctx, doc.C(), filter)
 	if err != nil {
@@ -39,14 +43,7 @@ func DeleteMany[T DocInter](ctx context.Context, doc T, filter bson.D) (int64, e
 	if dataStore == nil {
 		return 0, ErrNotConnected
 	}
-	data, _ := json.Marshal(filter)
-	collectionName := doc.C()
-	_, span := dataStore.startTraceSpan(ctx,
-		fmt.Sprintf("mongo.deleteMany.%s", collectionName),
-		attribute.String("db.collection", collectionName),
-		attribute.String("db.operation", "deleteMany"),
-		attribute.String("db.statement", string(data)),
-	)
+	_, span := getDeleteSpan(ctx, doc.C(), "deleteMany", filter)
 	defer span.End()
 	affected, err := dataStore.DeleteMany(ctx, doc.C(), filter)
 	if err != nil {

@@ -2,6 +2,7 @@ package ezapi
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"net/http"
 	"slices"
@@ -46,6 +47,69 @@ func (c *config) appendMiddlewares(mids ...gin.HandlerFunc) {
 
 func (c *config) prependMiddlewares(mids ...gin.HandlerFunc) {
 	c.Middlewares = append(mids, c.Middlewares...)
+}
+
+func (cfg *config) initSession() error {
+	if cfg.Session.Enable {
+		if cfg.Session.Store == "" {
+			return errors.New("session store is required")
+		}
+		if cfg.Session.CookieName == "" {
+			return errors.New("session name is required")
+		}
+		if cfg.Session.MaxAge == 0 {
+			return errors.New("session max age is required")
+		}
+		if len(cfg.Session.KeyPairs) == 0 {
+			return errors.New("session key pairs is required")
+		}
+		myStore = store.NewStore(cfg.Session.Store, cfg.Session.MaxAge, cfg.Session.KeyPairs...)
+		if myStore == nil {
+			return errors.New("session store is not supported: " + cfg.Session.Store)
+		}
+
+		for _, injector := range sessionInjectors {
+			injector.InjectSessionStore(myStore, cfg.Session.CookieName)
+		}
+		cfg.prependMiddlewares(sessions.Sessions(cfg.Session.CookieName, myStore))
+	}
+	return nil
+}
+
+func (cfg *config) initCSRF() error {
+	if cfg.CSRF.Enable {
+		if !cfg.Session.Enable {
+			return errors.New("csrf requires session")
+		}
+		if cfg.CSRF.Secret == "" {
+			return errors.New("csrf secret is required")
+		}
+		if cfg.CSRF.FieldName == "" {
+			return errors.New("csrf field name is required")
+		}
+		cfg.appendMiddlewares(
+			csrfProtectionWithExclusion(
+				csrf.Middleware(
+					csrf.Options{
+						Secret: cfg.CSRF.Secret,
+						ErrorFunc: func(c *gin.Context) {
+							c.String(http.StatusBadRequest, "CSRF token mismatch")
+							log.Warn("csrf token mismatch")
+							c.Abort()
+						},
+					},
+				),
+				cfg.CSRF.ExcludePaths,
+			),
+			func(c *gin.Context) {
+				if !slices.Contains(cfg.CSRF.ExcludePaths, c.Request.URL.Path) {
+					c.Request = c.Request.WithContext(context.WithValue(c.Request.Context(), _CtxKeyCSRF, csrf.GetToken(c)))
+				}
+				c.Next()
+			},
+		)
+	}
+	return nil
 }
 
 const defaultPort = 8080
@@ -121,62 +185,15 @@ const _CtxKeyCSRF = contextKey("gorilla.csrf.Token")
 func server(cfg *config) *http.Server {
 	portStr := fmt.Sprintf(":%d", cfg.Port)
 	log.Info("api service listen on port " + portStr)
-	if cfg.Session.Enable {
-		if cfg.Session.Store == "" {
-			panic("session store is required")
-		}
-		if cfg.Session.CookieName == "" {
-			panic("session name is required")
-		}
-		if cfg.Session.MaxAge == 0 {
-			panic("session max age is required")
-		}
-		if len(cfg.Session.KeyPairs) == 0 {
-			panic("session key pairs is required")
-		}
-		myStore = store.NewStore(cfg.Session.Store, cfg.Session.MaxAge, cfg.Session.KeyPairs...)
-		if myStore == nil {
-			panic("session store is not supported: " + cfg.Session.Store)
-		}
-
-		for _, injector := range sessionInjectors {
-			injector.InjectSessionStore(myStore, cfg.Session.CookieName)
-		}
-		cfg.prependMiddlewares(sessions.Sessions(cfg.Session.CookieName, myStore))
+	var err error
+	if err = cfg.initSession(); err != nil {
+		panic(err)
 	}
 
-	if cfg.CSRF.Enable {
-		if !cfg.Session.Enable {
-			panic("csrf requires session")
-		}
-		if cfg.CSRF.Secret == "" {
-			panic("csrf secret is required")
-		}
-		if cfg.CSRF.FieldName == "" {
-			panic("csrf field name is required")
-		}
-		cfg.appendMiddlewares(
-			csrfProtectionWithExclusion(
-				csrf.Middleware(
-					csrf.Options{
-						Secret: cfg.CSRF.Secret,
-						ErrorFunc: func(c *gin.Context) {
-							c.String(http.StatusBadRequest, "CSRF token mismatch")
-							log.Warn("csrf token mismatch")
-							c.Abort()
-						},
-					},
-				),
-				cfg.CSRF.ExcludePaths,
-			),
-			func(c *gin.Context) {
-				if !slices.Contains(cfg.CSRF.ExcludePaths, c.Request.URL.Path) {
-					c.Request = c.Request.WithContext(context.WithValue(c.Request.Context(), _CtxKeyCSRF, csrf.GetToken(c)))
-				}
-				c.Next()
-			},
-		)
+	if err = cfg.initCSRF(); err != nil {
+		panic(err)
 	}
+
 	if cfg.Tracer.Enable {
 		cfg.prependMiddlewares(otelgin.Middleware("API Server"))
 	}
@@ -227,10 +244,11 @@ func RunGin(ctx context.Context, opts ...option) error {
 	}(ser)
 	<-ctx.Done()
 	ctx, cancel := context.WithTimeout(context.Background(), constant.DefaultTimeout)
-	defer cancel()
 	if err := ser.Shutdown(ctx); err != nil {
+		cancel()
 		log.Fatal("Server forced to shutdown failed: " + err.Error())
 	}
+	cancel()
 	apiWait.Wait()
 	return nil
 }

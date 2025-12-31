@@ -202,7 +202,8 @@ func parseServiceDescriptor(
 
 	var targetService protoreflect.ServiceDescriptor
 	files.RangeFiles(func(fd protoreflect.FileDescriptor) bool {
-		for i := 0; i < fd.Services().Len(); i++ {
+
+		for i := range fd.Services().Len() {
 			service := fd.Services().Get(i)
 			if string(service.FullName()) == serviceName {
 				targetService = service
@@ -217,7 +218,7 @@ func parseServiceDescriptor(
 	}
 
 	methods := make(map[string]*methodInfo)
-	for i := 0; i < targetService.Methods().Len(); i++ {
+	for i := range targetService.Methods().Len() {
 		method := targetService.Methods().Get(i)
 		methods[string(method.Name())] = &methodInfo{
 			Name:       string(method.Name()),

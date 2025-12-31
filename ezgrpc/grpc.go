@@ -144,14 +144,12 @@ func RunGrpcGateway(ctx context.Context, port int) error {
 	gwmux := runtime.NewServeMux(DefaultServeMuxOpts...)
 
 	portStr := fmt.Sprintf(":%d", port)
-
 	for _, handler := range endpointHandlers {
 		if err := handler(ctx, gwmux, portStr, opts); err != nil {
 			return fmt.Errorf("failed to register handler: %w", err)
 		}
 	}
-
-	lis, err := net.Listen("tcp", portStr)
+	lis, err := getNetListen(ctx, port)
 	if err != nil {
 		return fmt.Errorf("failed to listen: %w", err)
 	}
@@ -189,20 +187,19 @@ func handlerFunc(grpcServer *grpc.Server, otherHandler http.Handler) http.Handle
 	}), &http2.Server{})
 }
 
-func Run(port int) error {
-	return runServe(port, nil)
+func Run(ctx context.Context, port int) error {
+	return runServe(ctx, port, nil)
 }
 
-func RunGrpcWithHttp(port int, httpHandler http.Handler) error {
+func RunGrpcWithHttp(ctx context.Context, port int, httpHandler http.Handler) error {
 	if httpHandler == nil {
-		return Run(port)
+		return Run(ctx, port)
 	}
-	return runServe(port, httpHandler)
+	return runServe(ctx, port, httpHandler)
 }
 
-func runServe(port int, httpHandler http.Handler) error {
-	portStr := fmt.Sprintf(":%d", port)
-	lis, err := net.Listen("tcp", portStr)
+func runServe(ctx context.Context, port int, httpHandler http.Handler) error {
+	lis, err := getNetListen(ctx, port)
 	if err != nil {
 		return err
 	}
@@ -214,6 +211,16 @@ func runServe(port int, httpHandler http.Handler) error {
 		WriteTimeout:      15 * time.Second,
 		IdleTimeout:       60 * time.Second,
 	}
-	log.Info("Serving on " + portStr)
+	log.Info(fmt.Sprintf("Serving on :%d", port))
 	return gwServer.Serve(lis)
+}
+
+func getNetListen(ctx context.Context, port int) (net.Listener, error) {
+	lc := net.ListenConfig{
+		// 這裡可以設置 KeepAlive 時間或其他選項
+		KeepAlive: 3 * time.Minute,
+	}
+	portStr := fmt.Sprintf(":%d", port)
+	// 傳入 context，讓啟動過程也受 context 控管
+	return lc.Listen(ctx, "tcp", portStr)
 }

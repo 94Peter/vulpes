@@ -34,7 +34,14 @@ func (*mockGreeterServer) SayHello(_ context.Context, in *pb.HelloRequest) (*pb.
 // startTestServer starts a gRPC server with the mockGreeterServer and reflection enabled.
 // It returns the address of the server and a function to stop it.
 func startTestServer(t *testing.T) (string, func()) {
-	lis, err := net.Listen("tcp", "localhost:7080")
+	lc := net.ListenConfig{
+		// 這裡可以設置 KeepAlive 時間或其他選項
+		KeepAlive: 3 * time.Minute,
+	}
+	portStr := fmt.Sprintf(":%d", 7080)
+	// 傳入 context，讓啟動過程也受 context 控管
+
+	lis, err := lc.Listen(t.Context(), "tcp", portStr)
 	require.NoError(t, err, "failed to listen on a random port")
 
 	s := grpc.NewServer()

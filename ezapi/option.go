@@ -38,7 +38,7 @@ func WithSession(enable bool, store string, cookieName string, maxAge int, keyPa
 
 func WithMiddleware(middleware ...gin.HandlerFunc) option {
 	return func(c *config) {
-		c.Middlewares = append(defaultMiddelware, middleware...)
+		c.Middlewares = append(c.Middlewares, middleware...)
 	}
 }
 

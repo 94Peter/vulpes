@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/94peter/vulpes/constant"
+
 	"github.com/go-redis/redis/v8"
 )
 

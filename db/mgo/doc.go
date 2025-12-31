@@ -41,7 +41,10 @@ func NewEmptyModel[T DocWithInitIndex]() T {
 	}
 
 	// Type-assert the reflected value back to the generic type T.
-	model := val.Interface().(T)
+	model, ok := val.Interface().(T)
+	if !ok {
+		panic("type assert fail")
+	}
 
 	// Now you can safely call the method.
 	model.InitIndex()

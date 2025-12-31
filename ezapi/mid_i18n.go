@@ -27,8 +27,7 @@ func I18n(defaultLanguage string, isLocalExist func(lang string) bool) gin.Handl
 			}
 			ctx, err := ctxi18n.WithLocale(c.Request.Context(), strings.ToLower(lang))
 			if err != nil {
-				c.Writer.WriteHeader(http.StatusInternalServerError)
-				c.Writer.Write([]byte("Failed to set locale: " + err.Error()))
+				c.String(http.StatusInternalServerError, "Failed to set locale: "+err.Error())
 				c.Abort()
 				return
 			}

@@ -85,9 +85,9 @@ func (cw *Writer) writeRecord(fields []string) error {
 }
 
 // Flush flushes internal buffers and the underlying writer.
-func (cw *Writer) flush() {
+func (cw *Writer) flush() error {
 	cw.w.Flush()
-	_ = cw.bufw.Flush()
+	return cw.bufw.Flush()
 }
 
 // Close flushes and marks writer closed. It does not close underlying io.Writer.
@@ -102,29 +102,36 @@ func (cw *Writer) close() error {
 
 // Write writes a single CSVMarshaler object to the provided io.Writer.
 // It supports multiple rows and optional header from the object.
-func Write(out io.Writer, data CSVMarshaler, opts ...Option) error {
+func Write(out io.Writer, data CSVMarshaler, opts ...Option) (err error) {
 	w := new(out, opts...)
-	defer w.close()
+	defer func() {
+		closeErr := w.close()
+		if err == nil { // 只有在主要邏輯沒錯時，才記錄 Close 的錯誤
+			err = closeErr
+		}
+	}()
 
-	headers, rows, err := data.MarshalCSV()
+	var headers []string
+	var rows [][]string
+
+	headers, rows, err = data.MarshalCSV()
 	if err != nil {
-		return err
+		return
 	}
 
-	if headers != nil {
-		if err := w.writeHeader(headers); err != nil {
-			return err
+	if len(headers) > 0 {
+		if err = w.writeHeader(headers); err != nil {
+			return
 		}
 	}
 
 	for _, row := range rows {
-		if err := w.writeRecord(row); err != nil {
-			return err
+		if err = w.writeRecord(row); err != nil {
+			return
 		}
 	}
-
-	w.flush()
-	return nil
+	err = w.flush()
+	return
 }
 
 const storageDefaultExpireTime = 20 * time.Minute

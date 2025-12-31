@@ -12,7 +12,7 @@ type querySDK interface {
 	FindRelated(ctx context.Context, className string, relatedText string) error
 }
 
-func (sdk *weaviateSdk) FindRelated(ctx context.Context, className string, relatedText string) error {
+func (sdk *weaviateSdk) FindRelated(_ context.Context, className string, relatedText string) error {
 	concepts := []string{relatedText}
 
 	// 2. 執行 NearText 向量相似度搜尋

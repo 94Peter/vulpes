@@ -48,7 +48,7 @@ func (l *ipRateLimiter) getLimiter(ip string) *rate.Limiter {
 
 // UnaryServerInterceptor returns a new unary server interceptor that performs rate limiting.
 func (l *ipRateLimiter) UnaryServerInterceptor() grpc.UnaryServerInterceptor {
-	return func(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (interface{}, error) {
+	return func(ctx context.Context, req any, _ *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (any, error) {
 		p, ok := peer.FromContext(ctx)
 		if !ok {
 			return nil, status.Error(codes.Internal, "could not retrieve peer information")

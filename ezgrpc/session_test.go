@@ -9,6 +9,7 @@ import (
 	"github.com/94peter/vulpes/codec"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"google.golang.org/grpc/metadata"
 )
 
@@ -27,7 +28,7 @@ func TestSetAndGetSessionData(t *testing.T) {
 
 	// 2. EXECUTE: Set the session data into the context
 	encoded, err := codec.Encode(data)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	ctxWithData := metadata.NewOutgoingContext(ctx, metadata.Pairs(setSessionDataKey, encoded))
 
 	// 3. VERIFY: Extract outgoing metadata from the context
@@ -43,7 +44,7 @@ func TestSetAndGetSessionData(t *testing.T) {
 
 	// 5. EXECUTE & VERIFY: Get the session data from the incoming context
 	retrievedData, err := GetSessionData[sessionData](incomingCtx)
-	assert.NoError(t, err, "GetSessionData should not return an error")
+	require.NoError(t, err, "GetSessionData should not return an error")
 	assert.Equal(t, data, retrievedData, "retrieved data should match original data")
 }
 
@@ -54,7 +55,7 @@ func TestGetSessionData_Errors(t *testing.T) {
 		_, err := GetSessionData[sessionData](context.Background())
 
 		// Verify: Check for the specific error
-		assert.Error(t, err)
+		require.Error(t, err)
 		assert.ErrorIs(t, err, ErrSessionNotFound)
 	})
 
@@ -66,7 +67,7 @@ func TestGetSessionData_Errors(t *testing.T) {
 		_, err := GetSessionData[sessionData](ctx)
 
 		// Verify: Check for the specific error
-		assert.Error(t, err)
+		require.Error(t, err)
 		assert.ErrorIs(t, err, ErrSessionNotFound)
 	})
 
@@ -78,7 +79,7 @@ func TestGetSessionData_Errors(t *testing.T) {
 		_, err := GetSessionData[sessionData](ctx)
 
 		// Verify: Check that a codec error is returned
-		assert.Error(t, err)
+		require.Error(t, err)
 		assert.ErrorIs(t, err, codec.ErrBase64DecodeFailed)
 	})
 }

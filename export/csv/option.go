@@ -8,12 +8,6 @@ func WithBom(enable bool) Option {
 	}
 }
 
-func WithQuoteAll(enable bool) Option {
-	return func(c *Config) {
-		c.QuoteAll = enable
-	}
-}
-
 func WithCRLF(enable bool) Option {
 	return func(c *Config) {
 		c.UseCRLF = enable

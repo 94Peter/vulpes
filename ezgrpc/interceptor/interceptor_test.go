@@ -27,7 +27,7 @@ const handlerErrorKey contextKey = "handler-error"
 // --- Mocks and Helpers ---
 
 // mockHandler is a mock grpc.UnaryHandler for testing.
-func mockHandler(ctx context.Context, req interface{}) (interface{}, error) {
+func mockHandler(ctx context.Context, req any) (any, error) {
 	// Check if the handler is supposed to panic
 	if p, ok := req.(string); ok && p == "panic" {
 		panic("handler panicked")
@@ -61,7 +61,7 @@ type mockMultiError struct {
 	errs []error
 }
 
-func (m *mockMultiError) Error() string {
+func (*mockMultiError) Error() string {
 	return "multiple errors"
 }
 
@@ -87,15 +87,15 @@ func (m *mockFieldError) Reason() string {
 	return m.reas
 }
 
-func (m *mockFieldError) Key() bool {
+func (*mockFieldError) Key() bool {
 	return false
 }
 
-func (m *mockFieldError) Cause() error {
+func (*mockFieldError) Cause() error {
 	return nil
 }
 
-func (m *mockFieldError) ErrorName() string {
+func (*mockFieldError) ErrorName() string {
 	return "FieldError"
 }
 
@@ -108,7 +108,7 @@ var mockInfo = &grpc.UnaryServerInfo{
 func TestRequestIDInterceptor(t *testing.T) {
 	t.Run("GeneratesNewRequestID", func(t *testing.T) {
 		var handlerCtx context.Context
-		handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		handler := func(ctx context.Context, _ any) (any, error) {
 			handlerCtx = ctx
 			return mockResponse, nil
 		}
@@ -128,7 +128,7 @@ func TestRequestIDInterceptor(t *testing.T) {
 		ctx := metadata.NewIncomingContext(context.Background(), md)
 
 		var handlerCtx context.Context
-		handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		handler := func(ctx context.Context, _ any) (any, error) {
 			handlerCtx = ctx
 			return mockResponse, nil
 		}
@@ -169,13 +169,13 @@ func TestRateLimitInterceptor(t *testing.T) {
 
 	// First two requests should be allowed
 	_, err := interceptor(ctx, "req1", mockInfo, mockHandler)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	_, err = interceptor(ctx, "req2", mockInfo, mockHandler)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 
 	// Third request should be rate limited
 	_, err = interceptor(ctx, "req3", mockInfo, mockHandler)
-	assert.Error(t, err)
+	require.Error(t, err)
 	st, ok := status.FromError(err)
 	require.True(t, ok)
 	assert.Equal(t, codes.ResourceExhausted, st.Code())
@@ -192,21 +192,21 @@ func TestValidateInterceptor(t *testing.T) {
 	t.Run("NoValidator", func(t *testing.T) {
 		req := "not a validator"
 		resp, err := validateUnaryInterceptor(context.Background(), req, mockInfo, mockHandler)
-		assert.NoError(t, err)
+		require.NoError(t, err)
 		assert.Equal(t, mockResponse, resp)
 	})
 
 	t.Run("ValidRequest", func(t *testing.T) {
 		req := &mockValidator{err: nil}
 		resp, err := validateUnaryInterceptor(context.Background(), req, mockInfo, mockHandler)
-		assert.NoError(t, err)
+		require.NoError(t, err)
 		assert.Equal(t, mockResponse, resp)
 	})
 
 	t.Run("SingleError", func(t *testing.T) {
 		req := &mockValidator{err: errors.New("validation failed: name is required")}
 		_, err := validateUnaryInterceptor(context.Background(), req, mockInfo, mockHandler)
-		assert.Error(t, err)
+		require.Error(t, err)
 		st, ok := status.FromError(err)
 		require.True(t, ok)
 		assert.Equal(t, codes.InvalidArgument, st.Code())
@@ -225,7 +225,7 @@ func TestValidateInterceptor(t *testing.T) {
 			},
 		}
 		_, err := validateUnaryInterceptor(context.Background(), req, mockInfo, mockHandler)
-		assert.Error(t, err)
+		require.Error(t, err)
 		st, ok := status.FromError(err)
 		require.True(t, ok)
 		assert.Equal(t, codes.InvalidArgument, st.Code())
@@ -241,7 +241,7 @@ func TestLoggerInterceptor(t *testing.T) {
 
 	t.Run("SuccessfulCall", func(t *testing.T) {
 		resp, err := loggerInterceptor(context.Background(), "request", mockInfo, mockHandler)
-		assert.NoError(t, err)
+		require.NoError(t, err)
 		assert.Equal(t, mockResponse, resp)
 	})
 
@@ -249,7 +249,7 @@ func TestLoggerInterceptor(t *testing.T) {
 		expectedErr := status.Error(codes.NotFound, "not found")
 		ctx := context.WithValue(context.Background(), handlerErrorKey, expectedErr)
 		_, err := loggerInterceptor(ctx, "request", mockInfo, mockHandler)
-		assert.Error(t, err)
+		require.Error(t, err)
 		assert.Equal(t, expectedErr, err)
 	})
 

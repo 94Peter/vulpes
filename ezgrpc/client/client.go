@@ -147,22 +147,22 @@ func (c *client) getOrCreateConn(address string) (*grpc.ClientConn, error) {
 	return conn, nil
 }
 
-func (c *client) fetchServiceInfoFromServer(ctx context.Context, conn *grpc.ClientConn, serviceName string) (*serviceInfo, error) {
+func (*client) fetchServiceInfoFromServer(ctx context.Context, conn *grpc.ClientConn, serviceName string) (*serviceInfo, error) {
 	reflectClient := rppb.NewServerReflectionClient(conn)
 	stream, err := reflectClient.ServerReflectionInfo(ctx, grpc.WaitForReady(true))
 	if err != nil {
-		return nil, fmt.Errorf("failed to create reflection stream: %v", err)
+		return nil, fmt.Errorf("failed to create reflection stream: %w", err)
 	}
 
 	if err := stream.Send(&rppb.ServerReflectionRequest{
 		MessageRequest: &rppb.ServerReflectionRequest_FileContainingSymbol{FileContainingSymbol: serviceName},
 	}); err != nil {
-		return nil, fmt.Errorf("failed to send file request: %v", err)
+		return nil, fmt.Errorf("failed to send file request: %w", err)
 	}
 
 	resp, err := stream.Recv()
 	if err != nil {
-		return nil, fmt.Errorf("failed to receive response: %v", err)
+		return nil, fmt.Errorf("failed to receive response: %w", err)
 	}
 
 	fileResp := resp.GetFileDescriptorResponse()
@@ -177,7 +177,7 @@ func (c *client) fetchServiceInfoFromServer(ctx context.Context, conn *grpc.Clie
 	for _, b := range fileResp.FileDescriptorProto {
 		fdp := &descriptorpb.FileDescriptorProto{}
 		if err := proto.Unmarshal(b, fdp); err != nil {
-			return nil, fmt.Errorf("failed to unmarshal file descriptor proto: %v", err)
+			return nil, fmt.Errorf("failed to unmarshal file descriptor proto: %w", err)
 		}
 		fileDescriptorProtos = append(fileDescriptorProtos, fdp)
 	}
@@ -189,7 +189,7 @@ func (c *client) fetchServiceInfoFromServer(ctx context.Context, conn *grpc.Clie
 func parseServiceDescriptor(fileDescriptorProtos []*descriptorpb.FileDescriptorProto, serviceName string) (*serviceInfo, error) {
 	files, err := protodesc.NewFiles(&descriptorpb.FileDescriptorSet{File: fileDescriptorProtos})
 	if err != nil {
-		return nil, fmt.Errorf("failed to create file descriptor from response: %v", err)
+		return nil, fmt.Errorf("failed to create file descriptor from response: %w", err)
 	}
 
 	var targetService protoreflect.ServiceDescriptor

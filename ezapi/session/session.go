@@ -3,10 +3,11 @@ package session
 import (
 	"time"
 
-	"github.com/94peter/vulpes/db/mgo"
 	"go.mongodb.org/mongo-driver/v2/bson"
 	"go.mongodb.org/mongo-driver/v2/mongo"
 	"go.mongodb.org/mongo-driver/v2/mongo/options"
+
+	"github.com/94peter/vulpes/db/mgo"
 )
 
 const sessionCollectionName = "ezapi_sessions"
@@ -41,7 +42,7 @@ type session struct {
 	Modified  time.Time
 }
 
-func (s *session) Validate() error {
+func (*session) Validate() error {
 	return nil
 }
 func (s *session) GetId() any {

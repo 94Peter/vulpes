@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"go.mongodb.org/mongo-driver/v2/bson"
 	"go.mongodb.org/mongo-driver/v2/mongo"
 )
@@ -18,11 +19,11 @@ type testUser struct {
 }
 
 // Implement the DocInter interface for testUser.
-func (u *testUser) C() string                   { return "users" }
-func (u *testUser) Indexes() []mongo.IndexModel { return nil }
-func (u *testUser) Validate() error             { return nil }
-func (u *testUser) GetId() any                  { return u.ID }
-func (u *testUser) SetId(id any)                { u.ID = id.(bson.ObjectID) }
+func (*testUser) C() string                   { return "users" }
+func (*testUser) Indexes() []mongo.IndexModel { return nil }
+func (*testUser) Validate() error             { return nil }
+func (u *testUser) GetId() any                { return u.ID }
+func (u *testUser) SetId(id any)              { u.ID = id.(bson.ObjectID) }
 
 func TestNewOnFindMock(t *testing.T) {
 	// Arrange: Define the fake data we want the mock cursor to return.
@@ -40,7 +41,7 @@ func TestNewOnFindMock(t *testing.T) {
 	cursor, err := onFindFunc(context.Background(), "users", nil)
 
 	// Assert: Verify the results.
-	assert.NoError(t, err, "The mock function itself should not return an error")
+	require.NoError(t, err, "The mock function itself should not return an error")
 	assert.NotNil(t, cursor, "The returned cursor should not be nil")
 
 	// Try to decode the data from the cursor.
@@ -48,7 +49,7 @@ func TestNewOnFindMock(t *testing.T) {
 	err = cursor.All(context.Background(), &decodedUsers)
 
 	// Assert that decoding works and the data matches our original fake data.
-	assert.NoError(t, err, "cursor.All should decode without errors")
+	require.NoError(t, err, "cursor.All should decode without errors")
 	assert.Equal(t, expectedUsers, decodedUsers, "The decoded data should match the fake data")
 }
 
@@ -66,7 +67,7 @@ func TestNewOnFindOneMock(t *testing.T) {
 	var decodedUser testUser
 	err := singleResult.Decode(&decodedUser)
 
-	assert.NoError(t, err, "Decode should not return an error")
+	require.NoError(t, err, "Decode should not return an error")
 	assert.Equal(t, expectedUser, decodedUser, "The decoded user should match the expected user")
 }
 
@@ -79,8 +80,8 @@ func TestNewErrOnFind(t *testing.T) {
 	cursor, err := onFindFunc(context.Background(), "users", nil)
 
 	// Assert
-	assert.Nil(t, cursor, "Cursor should be nil on error")
-	assert.Error(t, err, "An error should be returned")
+	require.Nil(t, cursor, "Cursor should be nil on error")
+	require.Error(t, err, "An error should be returned")
 	assert.Equal(t, expectedErr, err, "The returned error should be the one we provided")
 }
 
@@ -96,7 +97,7 @@ func TestNewErrOnFindOne(t *testing.T) {
 	var decodedUser testUser
 	err := singleResult.Decode(&decodedUser)
 
-	assert.Error(t, err, "Decode should return an error")
+	require.Error(t, err, "Decode should return an error")
 	assert.ErrorIs(t, err, expectedErr, "The error should be mongo.ErrNoDocuments")
 }
 
@@ -110,7 +111,7 @@ func TestNewOnSaveMock(t *testing.T) {
 	savedUser, err := onSaveFunc(context.Background(), user)
 
 	// Assert
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	assert.NotNil(t, savedUser)
 	assert.False(t, savedUser.GetId().(bson.ObjectID).IsZero(), "Saved document ID should not be zero")
 }
@@ -134,13 +135,13 @@ func TestNewOnPipeFindMock(t *testing.T) {
 	cursor, err := onPipeFindFunc(context.Background(), "users", nil)
 
 	// Assert
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	assert.NotNil(t, cursor)
 
 	// Decode into a variable of the concrete type.
 	var decodedResults []map[string]any
 	err = cursor.All(context.Background(), &decodedResults)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 
 	// Assert that the decoded results match the expected concrete type results.
 	assert.Equal(t, expectedResults, decodedResults)
@@ -159,7 +160,7 @@ func TestNewOnBulkOperationMock(t *testing.T) {
 		result, err := chainedOp.Execute(context.Background())
 
 		// Assert
-		assert.NoError(t, err)
+		require.NoError(t, err)
 		assert.Same(t, operator, chainedOp, "Chainable methods should return the same operator")
 		assert.Equal(t, expectedResult, result)
 	})
@@ -175,7 +176,7 @@ func TestNewOnBulkOperationMock(t *testing.T) {
 
 		// Assert
 		assert.Nil(t, result)
-		assert.Error(t, err)
+		require.Error(t, err)
 		assert.Equal(t, expectedErr, err)
 	})
 }

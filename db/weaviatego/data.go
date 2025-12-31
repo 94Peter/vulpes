@@ -50,7 +50,6 @@ func (sdk *weaviateSdk) CreateOrUpdateData(ctx context.Context, data Data) error
 	// 3. 如果新增失敗，檢查是否為「ID 衝突」錯誤
 	// 如果錯誤訊息包含 "already exists" 或相關字眼，我們視為 ID 衝突
 	if strings.Contains(err.Error(), "already exists") {
-
 		// 4. 切換到 Updater() 進行部分更新（PATCH）
 		// Updater 只會更新你提供的屬性。
 		updateErr := sdk.clt.Data().Updater().

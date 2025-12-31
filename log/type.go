@@ -95,6 +95,6 @@ func Err(err error) Field {
 
 // Any creates a Field with a value of any type, using reflection for serialization.
 // It is useful for logging complex types like structs, slices, and maps.
-func Any(key string, val interface{}) Field {
+func Any(key string, val any) Field {
 	return zap.Any(key, val)
 }

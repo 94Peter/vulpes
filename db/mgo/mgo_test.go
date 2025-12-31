@@ -8,6 +8,7 @@ import (
 	"github.com/94peter/vulpes/db/mgo"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"go.mongodb.org/mongo-driver/v2/bson"
 	"go.mongodb.org/mongo-driver/v2/mongo"
 	"go.mongodb.org/mongo-driver/v2/mongo/options"
@@ -21,11 +22,11 @@ type testUser struct {
 }
 
 // Implement the DocInter interface for testUser.
-func (u *testUser) C() string                   { return "users" }
-func (u *testUser) Indexes() []mongo.IndexModel { return nil }
-func (u *testUser) Validate() error             { return nil }
-func (u *testUser) GetId() any                  { return u.ID }
-func (u *testUser) SetId(id any)                { u.ID = id.(bson.ObjectID) }
+func (*testUser) C() string                   { return "users" }
+func (*testUser) Indexes() []mongo.IndexModel { return nil }
+func (*testUser) Validate() error             { return nil }
+func (u *testUser) GetId() any                { return u.ID }
+func (u *testUser) SetId(id any)              { u.ID = id.(bson.ObjectID) }
 
 func TestFind(t *testing.T) {
 	t.Run("Success", func(t *testing.T) {
@@ -45,7 +46,7 @@ func TestFind(t *testing.T) {
 		result, err := mgo.Find(context.Background(), &testUser{}, nil)
 
 		// Assert
-		assert.NoError(t, err)
+		require.NoError(t, err)
 		assert.Len(t, result, 2)
 		assert.Equal(t, expectedUsers[0].(testUser).Name, result[0].Name)
 		assert.Equal(t, expectedUsers[1].(testUser).Name, result[1].Name)
@@ -66,7 +67,7 @@ func TestFind(t *testing.T) {
 
 		// Assert
 		assert.Nil(t, result)
-		assert.Error(t, err)
+		require.Error(t, err)
 		assert.ErrorIs(t, err, expectedErr)
 	})
 }
@@ -86,7 +87,7 @@ func TestFindOne(t *testing.T) {
 		err := mgo.FindOne(context.Background(), &foundUser, nil)
 
 		// Assert
-		assert.NoError(t, err)
+		require.NoError(t, err)
 		assert.Equal(t, expectedUser, foundUser)
 	})
 
@@ -103,7 +104,7 @@ func TestFindOne(t *testing.T) {
 		err := mgo.FindOne(context.Background(), &foundUser, nil)
 
 		// Assert
-		assert.Error(t, err)
+		require.Error(t, err)
 		assert.ErrorIs(t, err, mongo.ErrNoDocuments)
 	})
 }
@@ -115,7 +116,7 @@ func TestFindById(t *testing.T) {
 
 	mockDB := &mgo.MockDatastore{
 		// We mock FindOne because FindById calls it internally.
-		OnFindOne: func(ctx context.Context, collection string, filter any, opts ...options.Lister[options.FindOneOptions]) *mongo.SingleResult {
+		OnFindOne: func(_ context.Context, _ string, filter any, _ ...options.Lister[options.FindOneOptions]) *mongo.SingleResult {
 			// Assert that the filter passed by FindById is correct.
 			filterMap := filter.(bson.M)
 			assert.Equal(t, userID, filterMap["_id"])
@@ -132,7 +133,7 @@ func TestFindById(t *testing.T) {
 	err := mgo.FindById(context.Background(), userToFind)
 
 	// Assert
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	assert.Equal(t, expectedUser.Name, userToFind.Name)
 }
 
@@ -144,7 +145,7 @@ func TestUpdateOne(t *testing.T) {
 		expectedModifiedCount := int64(1)
 
 		mockDB := &mgo.MockDatastore{
-			OnUpdateOne: func(ctx context.Context, collection string, f bson.D, u bson.D) (int64, error) {
+			OnUpdateOne: func(_ context.Context, collection string, f bson.D, u bson.D) (int64, error) {
 				assert.Equal(t, "users", collection)
 				assert.Equal(t, filter, f)
 				assert.Equal(t, update, u)
@@ -158,7 +159,7 @@ func TestUpdateOne(t *testing.T) {
 		modifiedCount, err := mgo.UpdateOne(context.Background(), &testUser{}, filter, update)
 
 		// Assert
-		assert.NoError(t, err)
+		require.NoError(t, err)
 		assert.Equal(t, expectedModifiedCount, modifiedCount)
 	})
 
@@ -169,7 +170,7 @@ func TestUpdateOne(t *testing.T) {
 		expectedErr := errors.New("datastore update failed")
 
 		mockDB := &mgo.MockDatastore{
-			OnUpdateOne: func(ctx context.Context, collection string, f bson.D, u bson.D) (int64, error) {
+			OnUpdateOne: func(_ context.Context, _ string, _, _ bson.D) (int64, error) {
 				return 0, expectedErr
 			},
 		}
@@ -181,7 +182,7 @@ func TestUpdateOne(t *testing.T) {
 
 		// Assert
 		assert.Zero(t, modifiedCount)
-		assert.Error(t, err)
+		require.Error(t, err)
 		assert.ErrorIs(t, err, expectedErr)
 	})
 }
@@ -195,7 +196,7 @@ func TestUpdateById(t *testing.T) {
 		expectedModifiedCount := int64(1)
 
 		mockDB := &mgo.MockDatastore{
-			OnUpdateOne: func(ctx context.Context, collection string, f bson.D, u bson.D) (int64, error) {
+			OnUpdateOne: func(_ context.Context, collection string, f bson.D, u bson.D) (int64, error) {
 				assert.Equal(t, "users", collection)
 				assert.Equal(t, bson.D{{Key: "_id", Value: userID}}, f)
 				assert.Equal(t, update, u)
@@ -209,7 +210,7 @@ func TestUpdateById(t *testing.T) {
 		modifiedCount, err := mgo.UpdateById(context.Background(), user, update)
 
 		// Assert
-		assert.NoError(t, err)
+		require.NoError(t, err)
 		assert.Equal(t, expectedModifiedCount, modifiedCount)
 	})
 
@@ -221,7 +222,7 @@ func TestUpdateById(t *testing.T) {
 		expectedErr := errors.New("datastore update by id failed")
 
 		mockDB := &mgo.MockDatastore{
-			OnUpdateOne: func(ctx context.Context, collection string, f bson.D, u bson.D) (int64, error) {
+			OnUpdateOne: func(_ context.Context, _ string, _, _ bson.D) (int64, error) {
 				return 0, expectedErr
 			},
 		}
@@ -233,7 +234,7 @@ func TestUpdateById(t *testing.T) {
 
 		// Assert
 		assert.Zero(t, modifiedCount)
-		assert.Error(t, err)
+		require.Error(t, err)
 		assert.ErrorIs(t, err, expectedErr)
 	})
 }
@@ -243,7 +244,7 @@ type testUserWithValidationError struct {
 	testUser
 }
 
-func (u *testUserWithValidationError) Validate() error {
+func (*testUserWithValidationError) Validate() error {
 	return errors.New("validation failed for test user")
 }
 
@@ -263,7 +264,7 @@ func TestSave(t *testing.T) {
 		savedUser, err := mgo.Save(context.Background(), user)
 
 		// Assert
-		assert.NoError(t, err)
+		require.NoError(t, err)
 		assert.NotNil(t, savedUser)
 		assert.False(t, savedUser.GetId().(bson.ObjectID).IsZero(), "Saved document ID should not be zero")
 		assert.Equal(t, user.Name, savedUser.Name, "Saved user name should match original")
@@ -275,7 +276,7 @@ func TestSave(t *testing.T) {
 		expectedErr := errors.New("datastore save failed")
 
 		mockDB := &mgo.MockDatastore{
-			OnSave: func(ctx context.Context, doc mgo.DocInter) (mgo.DocInter, error) {
+			OnSave: func(_ context.Context, _ mgo.DocInter) (mgo.DocInter, error) {
 				return nil, expectedErr
 			},
 		}
@@ -287,7 +288,7 @@ func TestSave(t *testing.T) {
 
 		// Assert
 		assert.Nil(t, savedUser)
-		assert.Error(t, err)
+		require.Error(t, err)
 		assert.ErrorIs(t, err, expectedErr)
 	})
 
@@ -306,8 +307,8 @@ func TestSave(t *testing.T) {
 
 		// Assert
 		assert.Nil(t, savedUser)
-		assert.Error(t, err)
-		assert.ErrorIs(t, err, mgo.ErrInvalidDocument)
+		require.Error(t, err)
+		require.ErrorIs(t, err, mgo.ErrInvalidDocument)
 		assert.Contains(t, err.Error(), "validation failed for test user")
 	})
 
@@ -326,8 +327,8 @@ func TestSave(t *testing.T) {
 
 		// Assert
 		assert.Nil(t, savedUser)
-		assert.Error(t, err)
-		assert.ErrorIs(t, err, mgo.ErrInvalidDocument)
+		require.Error(t, err)
+		require.ErrorIs(t, err, mgo.ErrInvalidDocument)
 		assert.Contains(t, err.Error(), "document cannot be nil")
 	})
 }
@@ -340,9 +341,9 @@ type testAggregate struct {
 }
 
 // Implement the MgoAggregate interface for testAggregate.
-func (t *testAggregate) GetPipeline(q bson.M) mongo.Pipeline { return t.Pipeline }
+func (t *testAggregate) GetPipeline(_ bson.M) mongo.Pipeline { return t.Pipeline }
 func (t *testAggregate) C() string                           { return t.CollectionName }
-func (t *testAggregate) Indexes() []mongo.IndexModel         { return nil }
+func (*testAggregate) Indexes() []mongo.IndexModel           { return nil }
 
 func TestPipeFind(t *testing.T) {
 	t.Run("Success", func(t *testing.T) {
@@ -368,7 +369,7 @@ func TestPipeFind(t *testing.T) {
 		result, err := mgo.PipeFind(context.Background(), aggr, nil) // filter is nil for PipeFind
 
 		// Assert
-		assert.NoError(t, err)
+		require.NoError(t, err)
 		assert.Len(t, result, 1)
 		assert.Equal(t, expectedUsers[0].Name, result[0].Name)
 	})
@@ -377,7 +378,7 @@ func TestPipeFind(t *testing.T) {
 		// Arrange
 		expectedErr := errors.New("datastore pipefind failed")
 		mockDB := &mgo.MockDatastore{
-			OnPipeFind: func(ctx context.Context, collection string, pipeline mongo.Pipeline) (*mongo.Cursor, error) {
+			OnPipeFind: func(_ context.Context, _ string, _ mongo.Pipeline) (*mongo.Cursor, error) {
 				return nil, expectedErr
 			},
 		}
@@ -395,7 +396,7 @@ func TestPipeFind(t *testing.T) {
 
 		// Assert
 		assert.Nil(t, result)
-		assert.Error(t, err)
+		require.Error(t, err)
 		assert.ErrorIs(t, err, expectedErr)
 	})
 }
@@ -407,7 +408,7 @@ func TestDeleteOne(t *testing.T) {
 		expectedDeletedCount := int64(1)
 
 		mockDB := &mgo.MockDatastore{
-			OnDeleteOne: func(ctx context.Context, collection string, f bson.D) (int64, error) {
+			OnDeleteOne: func(_ context.Context, collection string, f bson.D) (int64, error) {
 				assert.Equal(t, "users", collection)
 				assert.Equal(t, filter, f)
 				return expectedDeletedCount, nil
@@ -420,7 +421,7 @@ func TestDeleteOne(t *testing.T) {
 		deletedCount, err := mgo.DeleteOne(context.Background(), &testUser{}, filter)
 
 		// Assert
-		assert.NoError(t, err)
+		require.NoError(t, err)
 		assert.Equal(t, expectedDeletedCount, deletedCount)
 	})
 
@@ -430,7 +431,7 @@ func TestDeleteOne(t *testing.T) {
 		expectedErr := errors.New("datastore delete failed")
 
 		mockDB := &mgo.MockDatastore{
-			OnDeleteOne: func(ctx context.Context, collection string, f bson.D) (int64, error) {
+			OnDeleteOne: func(_ context.Context, _ string, _ bson.D) (int64, error) {
 				return 0, expectedErr
 			},
 		}
@@ -442,7 +443,7 @@ func TestDeleteOne(t *testing.T) {
 
 		// Assert
 		assert.Zero(t, deletedCount)
-		assert.Error(t, err)
+		require.Error(t, err)
 		assert.ErrorIs(t, err, expectedErr)
 	})
 }
@@ -455,7 +456,7 @@ func TestDeleteById(t *testing.T) {
 		expectedDeletedCount := int64(1)
 
 		mockDB := &mgo.MockDatastore{
-			OnDeleteOne: func(ctx context.Context, collection string, f bson.D) (int64, error) {
+			OnDeleteOne: func(_ context.Context, collection string, f bson.D) (int64, error) {
 				assert.Equal(t, "users", collection)
 				assert.Equal(t, bson.D{{Key: "_id", Value: userID}}, f)
 				return expectedDeletedCount, nil
@@ -468,7 +469,7 @@ func TestDeleteById(t *testing.T) {
 		deletedCount, err := mgo.DeleteById(context.Background(), user)
 
 		// Assert
-		assert.NoError(t, err)
+		require.NoError(t, err)
 		assert.Equal(t, expectedDeletedCount, deletedCount)
 	})
 
@@ -479,7 +480,7 @@ func TestDeleteById(t *testing.T) {
 		expectedErr := errors.New("datastore delete by id failed")
 
 		mockDB := &mgo.MockDatastore{
-			OnDeleteOne: func(ctx context.Context, collection string, f bson.D) (int64, error) {
+			OnDeleteOne: func(_ context.Context, _ string, _ bson.D) (int64, error) {
 				return 0, expectedErr
 			},
 		}
@@ -491,7 +492,7 @@ func TestDeleteById(t *testing.T) {
 
 		// Assert
 		assert.Zero(t, deletedCount)
-		assert.Error(t, err)
+		require.Error(t, err)
 		assert.ErrorIs(t, err, expectedErr)
 	})
 }
@@ -503,7 +504,7 @@ func TestDeleteMany(t *testing.T) {
 		expectedDeletedCount := int64(2)
 
 		mockDB := &mgo.MockDatastore{
-			OnDeleteMany: func(ctx context.Context, collection string, f bson.D) (int64, error) {
+			OnDeleteMany: func(_ context.Context, collection string, f bson.D) (int64, error) {
 				assert.Equal(t, "users", collection)
 				assert.Equal(t, filter, f)
 				return expectedDeletedCount, nil
@@ -516,7 +517,7 @@ func TestDeleteMany(t *testing.T) {
 		deletedCount, err := mgo.DeleteMany(context.Background(), &testUser{}, filter)
 
 		// Assert
-		assert.NoError(t, err)
+		require.NoError(t, err)
 		assert.Equal(t, expectedDeletedCount, deletedCount)
 	})
 
@@ -526,7 +527,7 @@ func TestDeleteMany(t *testing.T) {
 		expectedErr := errors.New("datastore delete many failed")
 
 		mockDB := &mgo.MockDatastore{
-			OnDeleteMany: func(ctx context.Context, collection string, f bson.D) (int64, error) {
+			OnDeleteMany: func(_ context.Context, _ string, _ bson.D) (int64, error) {
 				return 0, expectedErr
 			},
 		}
@@ -538,7 +539,7 @@ func TestDeleteMany(t *testing.T) {
 
 		// Assert
 		assert.Zero(t, deletedCount)
-		assert.Error(t, err)
+		require.Error(t, err)
 		assert.ErrorIs(t, err, expectedErr)
 	})
 }

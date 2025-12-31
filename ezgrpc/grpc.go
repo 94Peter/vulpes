@@ -147,13 +147,13 @@ func RunGrpcGateway(ctx context.Context, port int) error {
 
 	for _, handler := range endpointHandlers {
 		if err := handler(ctx, gwmux, portStr, opts); err != nil {
-			return fmt.Errorf("failed to register handler: %v", err)
+			return fmt.Errorf("failed to register handler: %w", err)
 		}
 	}
 
 	lis, err := net.Listen("tcp", portStr)
 	if err != nil {
-		return fmt.Errorf("failed to listen: %v", err)
+		return fmt.Errorf("failed to listen: %w", err)
 	}
 
 	grpc_prometheus.Register(grpcService)

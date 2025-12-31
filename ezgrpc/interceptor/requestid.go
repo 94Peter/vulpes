@@ -42,10 +42,10 @@ func GetRequestID(ctx context.Context) string {
 // The request ID is then added to the context for downstream use.
 var requestIDInterceptor grpc.UnaryServerInterceptor = func(
 	ctx context.Context,
-	req interface{},
+	req any,
 	info *grpc.UnaryServerInfo,
 	handler grpc.UnaryHandler,
-) (resp interface{}, err error) {
+) (resp any, err error) {
 	md, ok := metadata.FromIncomingContext(ctx)
 	var requestID string
 	if ok {

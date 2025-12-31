@@ -6,8 +6,10 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/94peter/vulpes/ezgrpc/client"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+
+	"github.com/94peter/vulpes/ezgrpc/client"
 )
 
 // mockClient is a mock implementation of the client.Client interface for testing.
@@ -17,15 +19,15 @@ type mockClient struct {
 }
 
 // Invoke simulates the behavior of the real client's Invoke method.
-func (m *mockClient) Invoke(ctx context.Context, address, serviceName, methodName string, req []byte) ([]byte, error) {
+func (m *mockClient) Invoke(_ context.Context, _, _, _ string, _ []byte) ([]byte, error) {
 	return m.resp, m.err
 }
 
-func (m *mockClient) Close() error {
+func (*mockClient) Close() error {
 	return nil
 }
 
-func (m *mockClient) GetServiceInvoker(ctx context.Context, address, serviceName string) (client.ServiceInvoker, error) {
+func (*mockClient) GetServiceInvoker(_ context.Context, _, _ string) (client.ServiceInvoker, error) {
 	return nil, nil
 }
 
@@ -71,8 +73,8 @@ func TestInvoke(t *testing.T) {
 		resp, err := Invoke[map[string]any, map[string]any](ctx, "localhost:8081", "mediaService.ImageService", "SyncImageCount", req)
 
 		// Assertions
-		assert.NoError(t, err)
-		assert.NotNil(t, resp)
+		require.NoError(t, err)
+		require.NotNil(t, resp)
 		assert.Equal(t, "success", resp["message"])
 	})
 
@@ -89,7 +91,7 @@ func TestInvoke(t *testing.T) {
 		_, err := Invoke[map[string]any, map[string]any](ctx, "localhost:8081", "mediaService.ImageService", "SyncImageCount", req)
 
 		// Assertions
-		assert.Error(t, err)
+		require.Error(t, err)
 		assert.Equal(t, "grpc error", err.Error())
 	})
 
@@ -106,7 +108,7 @@ func TestInvoke(t *testing.T) {
 		_, err := Invoke[map[string]any, map[string]any](ctx, "localhost:8081", "mediaService.ImageService", "SyncImageCount", req)
 
 		// Assertions
-		assert.Error(t, err)
-		assert.IsType(t, &json.SyntaxError{}, err)
+		require.Error(t, err)
+		assert.ErrorIs(t, err, &json.SyntaxError{})
 	})
 }

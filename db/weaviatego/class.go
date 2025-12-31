@@ -24,8 +24,8 @@ func NewModelsClassBuilder(name, description string) ModelsClassBuilder {
 			VectorConfig: map[string]models.VectorConfig{
 				"data_vector": {
 					VectorIndexType: "hnsw",
-					Vectorizer: map[string]interface{}{
-						"text2vec-weaviate": map[string]interface{}{
+					Vectorizer: map[string]any{
+						"text2vec-weaviate": map[string]any{
 							"model":      "Snowflake/snowflake-arctic-embed-m-v1.5",
 							"dimensions": 256,
 						},

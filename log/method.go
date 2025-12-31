@@ -39,26 +39,26 @@ func Fatal(msg string, fields ...Field) {
 // These methods provide a convenient Printf-style API but are slightly less performant.
 
 // Debugf logs a formatted message at the Debug level.
-func Debugf(format string, a ...interface{}) {
+func Debugf(format string, a ...any) {
 	s().Debugf(format, a...)
 }
 
 // Infof logs a formatted message at the Info level.
-func Infof(format string, a ...interface{}) {
+func Infof(format string, a ...any) {
 	s().Infof(format, a...)
 }
 
 // Warnf logs a formatted message at the Warn level.
-func Warnf(format string, a ...interface{}) {
+func Warnf(format string, a ...any) {
 	s().Warnf(format, a...)
 }
 
 // Errorf logs a formatted message at the Error level.
-func Errorf(format string, a ...interface{}) {
+func Errorf(format string, a ...any) {
 	s().Errorf(format, a...)
 }
 
 // Fatalf logs a formatted message at the Fatal level and then calls os.Exit(1).
-func Fatalf(format string, a ...interface{}) {
+func Fatalf(format string, a ...any) {
 	s().Fatalf(format, a...)
 }

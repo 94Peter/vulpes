@@ -40,7 +40,7 @@ var (
 	// validateUnaryInterceptor is a gRPC unary server interceptor that automatically validates incoming requests.
 	// It checks if the request message implements the validator interface and, if so, runs the validation.
 	// If validation fails, it returns a gRPC error with detailed information about the validation failures.
-	validateUnaryInterceptor grpc.UnaryServerInterceptor = func(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (interface{}, error) {
+	validateUnaryInterceptor grpc.UnaryServerInterceptor = func(ctx context.Context, req any, _ *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (any, error) {
 		// Check if the request implements the Validator interface
 		if !enableValidate {
 			return handler(ctx, req)

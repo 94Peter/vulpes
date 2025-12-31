@@ -10,9 +10,14 @@ import (
 
 func I18n(defaultLanguage string, isLocalExist func(lang string) bool) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		lang := c.GetString("line.liff.locale")
-		if lang == "" {
+		var lang string
+		switch {
+		case c.GetString("line.liff.locale") != "":
+			lang = c.GetString("line.liff.locale")
+		case c.Param("lang") != "":
 			lang = c.Param("lang")
+		default:
+			lang = defaultLanguage
 		}
 
 		if lang != "" {

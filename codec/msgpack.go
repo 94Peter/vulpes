@@ -14,7 +14,7 @@ import (
 type msgpackCodec[T any] struct{}
 
 // Encode serializes the value `v` first using MessagePack, then encodes the result into a Base64 string.
-func (c *msgpackCodec[T]) Encode(v T) (string, error) {
+func (_ *msgpackCodec[T]) Encode(v T) (string, error) {
 	b, err := msgpack.Marshal(v)
 	if err != nil {
 		return "", fmt.Errorf("%w: %w", ErrMsgPackEncodeFailed, err)
@@ -23,7 +23,7 @@ func (c *msgpackCodec[T]) Encode(v T) (string, error) {
 }
 
 // Decode first decodes the Base64 string `s` into bytes, then deserializes the bytes using MessagePack.
-func (c *msgpackCodec[T]) Decode(s string) (T, error) {
+func (_ *msgpackCodec[T]) Decode(s string) (T, error) {
 	b, err := base64.StdEncoding.DecodeString(s)
 	if err != nil {
 		return *new(T), fmt.Errorf("%w: %w", ErrBase64DecodeFailed, err)
@@ -36,7 +36,7 @@ func (c *msgpackCodec[T]) Decode(s string) (T, error) {
 }
 
 // Method returns the MessagePack codec method identifier.
-func (c *msgpackCodec[T]) Method() CodecMethod {
+func (_ *msgpackCodec[T]) Method() CodecMethod {
 	return MSGPACK
 }
 

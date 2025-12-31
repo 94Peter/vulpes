@@ -162,7 +162,7 @@ func deleteSession(ctx context.Context, response http.ResponseWriter) error {
 
 // extractSessionDataFromCookie is a grpc-gateway function that reads the HTTP session cookie
 // and injects the session data into gRPC metadata for the backend.
-func extractSessionDataFromCookie(ctx context.Context, req *http.Request) metadata.MD {
+func extractSessionDataFromCookie(ctx context.Context, _ *http.Request) metadata.MD {
 	md := make(metadata.MD)
 
 	session, ok := getSessionFromCtx(ctx)

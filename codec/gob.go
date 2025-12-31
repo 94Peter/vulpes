@@ -14,7 +14,7 @@ import (
 type gobCodec[T any] struct{}
 
 // Encode serializes the value `v` first using GOB, then encodes the result into a Base64 string.
-func (c *gobCodec[T]) Encode(v T) (string, error) {
+func (_ *gobCodec[T]) Encode(v T) (string, error) {
 	var buf bytes.Buffer
 	err := gob.NewEncoder(&buf).Encode(v)
 	if err != nil {
@@ -24,7 +24,7 @@ func (c *gobCodec[T]) Encode(v T) (string, error) {
 }
 
 // Decode first decodes the Base64 string `s` into bytes, then deserializes the bytes using GOB.
-func (c *gobCodec[T]) Decode(s string) (T, error) {
+func (_ *gobCodec[T]) Decode(s string) (T, error) {
 	data, err := base64.StdEncoding.DecodeString(s)
 	if err != nil {
 		return *new(T), fmt.Errorf("%w: %w", ErrBase64DecodeFailed, err)
@@ -40,7 +40,7 @@ func (c *gobCodec[T]) Decode(s string) (T, error) {
 }
 
 // Method returns the GOB codec method identifier.
-func (c *gobCodec[T]) Method() CodecMethod {
+func (_ *gobCodec[T]) Method() CodecMethod {
 	return GOB
 }
 

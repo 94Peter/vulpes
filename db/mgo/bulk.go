@@ -88,7 +88,7 @@ func (b *bulkOperation) Execute(ctx context.Context) (*mongo.BulkWriteResult, er
 	}
 	result, err := b.collection.BulkWrite(ctx, b.operations)
 	if err != nil {
-		return nil, fmt.Errorf("%w: %v", ErrWriteFailed, err)
+		return nil, fmt.Errorf("%w: %w", ErrWriteFailed, err)
 	}
 
 	return result, nil

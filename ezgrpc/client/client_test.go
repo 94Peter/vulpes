@@ -24,7 +24,7 @@ type mockGreeterServer struct {
 }
 
 // SayHello is the implementation of the SayHello RPC.
-func (s *mockGreeterServer) SayHello(ctx context.Context, in *pb.HelloRequest) (*pb.HelloReply, error) {
+func (*mockGreeterServer) SayHello(_ context.Context, in *pb.HelloRequest) (*pb.HelloReply, error) {
 	if in.Name == "error" {
 		return nil, fmt.Errorf("mock error")
 	}

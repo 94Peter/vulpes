@@ -110,6 +110,10 @@ func initEngin(cfg *config) {
 	})
 }
 
+type contextKey string
+
+const _CtxKeyCSRF = contextKey("gorilla.csrf.Token")
+
 // server creates and configures an *http.Server with the gin engine as its handler.
 func server(cfg *config) *http.Server {
 	portStr := fmt.Sprintf(":%d", cfg.Port)
@@ -164,7 +168,7 @@ func server(cfg *config) *http.Server {
 			),
 			func(c *gin.Context) {
 				if !slices.Contains(cfg.CSRF.ExcludePaths, c.Request.URL.Path) {
-					c.Request = c.Request.WithContext(context.WithValue(c.Request.Context(), "gorilla.csrf.Token", csrf.GetToken(c)))
+					c.Request = c.Request.WithContext(context.WithValue(c.Request.Context(), _CtxKeyCSRF, csrf.GetToken(c)))
 				}
 				c.Next()
 			},

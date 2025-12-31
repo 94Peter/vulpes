@@ -76,7 +76,7 @@ func (m *MockDatastore) FindOne(ctx context.Context, collection string, filter a
 	return m.OnFindOne(ctx, collection, filter, opts...)
 }
 
-func (m *MockDatastore) UpdateOne(ctx context.Context, collection string, filter bson.D, update bson.D, opts ...options.Lister[options.UpdateOneOptions]) (int64, error) {
+func (m *MockDatastore) UpdateOne(ctx context.Context, collection string, filter bson.D, update bson.D, _ ...options.Lister[options.UpdateOneOptions]) (int64, error) {
 	return m.OnUpdateOne(ctx, collection, filter, update)
 }
 
@@ -120,7 +120,7 @@ func (m *MockDatastore) getDatabase() *mongo.Database {
 	return m.OnGetDatabase()
 }
 
-func (m *MockDatastore) getClient() *mongo.Client {
+func (*MockDatastore) getClient() *mongo.Client {
 	return nil
 }
 
@@ -160,7 +160,7 @@ func (m *MockBulkOperator) Execute(ctx context.Context) (*mongo.BulkWriteResult,
 
 // NewOnFindMock returns an OnFind function that returns a cursor with the given fake data.
 func NewOnFindMock(fakeData ...any) func(ctx context.Context, collection string, filter any, opts ...options.Lister[options.FindOptions]) (*mongo.Cursor, error) {
-	return func(ctx context.Context, collection string, filter any, opts ...options.Lister[options.FindOptions]) (*mongo.Cursor, error) {
+	return func(_ context.Context, _ string, _ any, _ ...options.Lister[options.FindOptions]) (*mongo.Cursor, error) {
 		cursor, err := mongo.NewCursorFromDocuments(fakeData, nil, nil)
 		return cursor, err
 	}
@@ -168,21 +168,21 @@ func NewOnFindMock(fakeData ...any) func(ctx context.Context, collection string,
 
 // NewOnFindOneMock returns an OnFindOne function that returns a SingleResult with the given fake data.
 func NewOnFindOneMock(fakeData any) func(ctx context.Context, collection string, filter any, opts ...options.Lister[options.FindOneOptions]) *mongo.SingleResult {
-	return func(ctx context.Context, collection string, filter any, opts ...options.Lister[options.FindOneOptions]) *mongo.SingleResult {
+	return func(_ context.Context, _ string, _ any, _ ...options.Lister[options.FindOneOptions]) *mongo.SingleResult {
 		return mongo.NewSingleResultFromDocument(fakeData, nil, nil)
 	}
 }
 
 // NewErrOnFind returns an OnFind function that always returns the specified error.
 func NewErrOnFind(err error) func(ctx context.Context, collection string, filter any, opts ...options.Lister[options.FindOptions]) (*mongo.Cursor, error) {
-	return func(ctx context.Context, collection string, filter any, opts ...options.Lister[options.FindOptions]) (*mongo.Cursor, error) {
+	return func(_ context.Context, _ string, _ any, _ ...options.Lister[options.FindOptions]) (*mongo.Cursor, error) {
 		return nil, err
 	}
 }
 
 // NewErrOnFindOne returns an OnFindOne function that returns a SingleResult containing the specified error.
 func NewErrOnFindOne(err error) func(ctx context.Context, collection string, filter any, opts ...options.Lister[options.FindOneOptions]) *mongo.SingleResult {
-	return func(ctx context.Context, collection string, filter any, opts ...options.Lister[options.FindOneOptions]) *mongo.SingleResult {
+	return func(_ context.Context, _ string, _ any, _ ...options.Lister[options.FindOneOptions]) *mongo.SingleResult {
 		// Pass an empty non-nil document to prevent the decoder from returning
 		// its own "document is nil" error, ensuring it returns the error we injected.
 		return mongo.NewSingleResultFromDocument(bson.D{}, err, nil)
@@ -192,13 +192,13 @@ func NewErrOnFindOne(err error) func(ctx context.Context, collection string, fil
 // NewOnSaveMock returns an OnSave function that simulates a successful save.
 // It assigns a new ObjectID to the document and returns it.
 func NewOnSaveMock() func(ctx context.Context, doc DocInter) (DocInter, error) {
-	return func(ctx context.Context, doc DocInter) (DocInter, error) {
+	return func(_ context.Context, doc DocInter) (DocInter, error) {
 		// 1. Restore the nil check for robustness.
 		if v := reflect.ValueOf(doc); v.Kind() == reflect.Ptr && v.IsNil() {
 			return nil, fmt.Errorf("%w: %w", ErrInvalidDocument, errors.New("document cannot be nil"))
 		}
 		if err := doc.Validate(); err != nil {
-			return nil, fmt.Errorf("%w: %v", ErrInvalidDocument, err)
+			return nil, fmt.Errorf("%w: %w", ErrInvalidDocument, err)
 		}
 		doc.SetId(bson.NewObjectID())
 		return doc, nil
@@ -207,7 +207,7 @@ func NewOnSaveMock() func(ctx context.Context, doc DocInter) (DocInter, error) {
 
 // NewOnPipeFindMock returns an OnPipeFind function that returns a cursor with the given fake data.
 func NewOnPipeFindMock(fakeData ...any) func(ctx context.Context, collection string, pipeline mongo.Pipeline) (*mongo.Cursor, error) {
-	return func(ctx context.Context, collection string, pipeline mongo.Pipeline) (*mongo.Cursor, error) {
+	return func(_ context.Context, _ string, _ mongo.Pipeline) (*mongo.Cursor, error) {
 		cursor, err := mongo.NewCursorFromDocuments(fakeData, nil, nil)
 		return cursor, err
 	}
@@ -217,16 +217,16 @@ func NewOnPipeFindMock(fakeData ...any) func(ctx context.Context, collection str
 // The mock BulkOperator's chainable methods are pre-configured to return itself,
 // and its Execute method is set to return the provided result and error.
 func NewOnBulkOperationMock(result *mongo.BulkWriteResult, err error) func(cname string) BulkOperator {
-	return func(cname string) BulkOperator {
+	return func(_ string) BulkOperator {
 		// Create a mock operator
 		mockOp := &MockBulkOperator{}
 
 		// Make chainable methods return the mock operator itself
-		mockOp.OnInsertOne = func(doc DocInter) BulkOperator { return mockOp }
-		mockOp.OnUpdateOne = func(filter any, update any) BulkOperator { return mockOp }
+		mockOp.OnInsertOne = func(_ DocInter) BulkOperator { return mockOp }
+		mockOp.OnUpdateOne = func(_, _ any) BulkOperator { return mockOp }
 
 		// Set the final return value for the Execute method
-		mockOp.OnExecute = func(ctx context.Context) (*mongo.BulkWriteResult, error) {
+		mockOp.OnExecute = func(_ context.Context) (*mongo.BulkWriteResult, error) {
 			return result, err
 		}
 		return mockOp

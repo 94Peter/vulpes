@@ -4,22 +4,37 @@ linters:
   enable:
     - bodyclose
     - copyloopvar
+    - dogsled
+    - dupl
     - errcheck
-    - gocognit
+    - errorlint
+    - funlen
+    - gocheckcompilerdirectives
     - goconst
+    - gocritic
+    - gocyclo
+    - godox
+    - mnd
+    - goprintffuncname
     - gosec
     - govet
+    - intrange
     - ineffassign
-    - makezero
+    - lll
     - misspell
-    - nilerr
+    - nakedret
+    - noctx
     - nolintlint
-    - prealloc
+    - revive
     - staticcheck
-    - tagliatelle
+    - testifylint
     - unconvert
     - unparam
+    - unused
+    - whitespace
   settings:
+    dupl:
+      threshold: 100
     errcheck:
       check-type-assertions: true
     goconst:
@@ -37,6 +52,13 @@ linters:
           yaml: snake
     unparam:
       check-exported: false
+    revive:
+      rules:
+        - name: indent-error-flow
+        - name: unexported-return
+          disabled: true
+        - name: unused-parameter
+        - name: unused-receiver
   exclusions:
     generated: lax
     rules:
@@ -58,9 +80,13 @@ issues:
   max-same-issues: 0
 formatters:
   enable:
-    - gofumpt
+    - gofmt
     - goimports
   settings:
+    gofmt:
+      rewrite-rules:
+        - pattern: 'interface{}'
+          replacement: 'any'
     goimports:
       local-prefixes:
         - github.com/94peter/vulpes

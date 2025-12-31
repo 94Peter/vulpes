@@ -53,7 +53,7 @@ func SetCookie(ctx context.Context, key, value string, path string, maxAge int) 
 // setCookieForwarder is the response forwarder function for grpc-gateway.
 // It inspects the gRPC metadata for "set-cookie-header" and "delete-cookie" keys
 // and modifies the HTTP response writer to add the appropriate "Set-Cookie" headers.
-func setCookieForwarder(ctx context.Context, w http.ResponseWriter, resp proto.Message) error {
+func setCookieForwarder(ctx context.Context, w http.ResponseWriter, _ proto.Message) error {
 	// 從 context 中獲取 gRPC 伺服器 metadata
 	md, ok := runtime.ServerMetadataFromContext(ctx)
 	if !ok {

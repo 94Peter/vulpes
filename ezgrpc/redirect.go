@@ -32,7 +32,7 @@ func redirectResponseOptionHandler(ctx context.Context, w http.ResponseWriter, _
 	return nil
 }
 
-func redirectResponseModifierHandler(ctx context.Context, resp proto.Message) (interface{}, error) {
+func redirectResponseModifierHandler(ctx context.Context, resp proto.Message) (any, error) {
 	// gRPC-Gateway 會將 gRPC header metadata 的 "location" 鍵轉換為 HTTP 響應的 "Grpc-Metadata-Location"
 	md, ok := runtime.ServerMetadataFromContext(ctx)
 	if !ok {

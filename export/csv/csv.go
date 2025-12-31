@@ -19,18 +19,16 @@ type CSVMarshaler interface {
 	MarshalCSV() (headers []string, rows [][]string, err error)
 }
 
-// Options configures the Writer behaviour.
+// Options configures the Writer behavior.
 type Config struct {
 	Delimiter rune // field delimiter, default ','
 	UseBOM    bool // write UTF-8 BOM at start
-	QuoteAll  bool // quote all fields
 	UseCRLF   bool // use CRLF line endings
 }
 
 var defaultOption = &Config{
 	Delimiter: ',',
 	UseBOM:    true,
-	QuoteAll:  true,
 	UseCRLF:   true,
 }
 
@@ -74,11 +72,6 @@ func (cw *Writer) writeHeader(fields []string) error {
 	// ensure BOM is written if configured — best-effort
 	if cw.opts.UseBOM {
 		_ = cw.writeBOM()
-	}
-	if cw.opts.QuoteAll {
-		// if QuoteAll is requested, ensure every field is quoted by wrapping
-		// but encoding/csv provides QuoteAll option only in Go1.20+. We emulate
-		// by setting UseCRLF and relying on csv.Writer. Simpler: set LazyQuotes false
 	}
 	return cw.w.Write(fields)
 }

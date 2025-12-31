@@ -6,12 +6,13 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/94peter/vulpes/db/mgo"
 	ginSession "github.com/gin-contrib/sessions"
 	"github.com/gorilla/securecookie"
 	"github.com/gorilla/sessions"
 	"go.mongodb.org/mongo-driver/v2/bson"
 	"go.mongodb.org/mongo-driver/v2/mongo/options"
+
+	"github.com/94peter/vulpes/db/mgo"
 
 	mysession "github.com/94peter/vulpes/ezapi/session"
 )
@@ -166,7 +167,7 @@ func (m *mongoStore) upsert(ctx context.Context, session *sessions.Session) erro
 	return nil
 }
 
-func (m *mongoStore) delete(ctx context.Context, session *sessions.Session) error {
+func (*mongoStore) delete(ctx context.Context, session *sessions.Session) error {
 	oid, err := bson.ObjectIDFromHex(session.ID)
 	if err != nil {
 		return err

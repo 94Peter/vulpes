@@ -13,7 +13,7 @@ import (
 
 // recoveryHandler is a function that recovers from panics and returns a gRPC error.
 // It logs the panic and returns a gRPC status with an internal error code.
-func recoveryHandler(p interface{}) error {
+func recoveryHandler(p any) error {
 	log.Error("panic occurred and recovery", log.Any("error", p))
 	return status.Errorf(codes.Internal, "internal error: %v", p)
 }

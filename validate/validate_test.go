@@ -1,6 +1,7 @@
 package validate
 
 import (
+	"errors"
 	"testing"
 
 	"github.com/go-playground/validator/v10"
@@ -42,7 +43,8 @@ func TestStruct(t *testing.T) {
 		require.Error(t, err)
 
 		// Optionally, we can assert that the error is of the expected type.
-		_, ok := err.(validator.ValidationErrors)
+		var validationErrors validator.ValidationErrors
+		ok := errors.As(err, &validationErrors)
 		assert.True(t, ok, "error should be of type validator.ValidationErrors")
 	})
 

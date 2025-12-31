@@ -21,7 +21,7 @@ type TestData struct {
 	Age  int    `json:"age"`
 }
 
-func (d *TestData) ClassName() string {
+func (*TestData) ClassName() string {
 	return "Test"
 }
 

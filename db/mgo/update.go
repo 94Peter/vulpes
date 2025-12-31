@@ -57,7 +57,7 @@ func UpdateMany[T DocInter](ctx context.Context, doc T, filter bson.D, update bs
 func (m *mongoStore) UpdateOne(ctx context.Context, collection string, filter bson.D, update bson.D, opts ...options.Lister[options.UpdateOneOptions]) (int64, error) {
 	result, err := m.getCollection(collection).UpdateOne(ctx, filter, update, opts...)
 	if err != nil {
-		return 0, fmt.Errorf("%w: %v", ErrWriteFailed, err)
+		return 0, fmt.Errorf("%w: %w", ErrWriteFailed, err)
 	}
 	return result.ModifiedCount, nil
 }
@@ -66,7 +66,7 @@ func (m *mongoStore) UpdateOne(ctx context.Context, collection string, filter bs
 func (m *mongoStore) UpdateMany(ctx context.Context, collection string, filter bson.D, update bson.D) (int64, error) {
 	result, err := m.getCollection(collection).UpdateMany(ctx, filter, update)
 	if err != nil {
-		return 0, fmt.Errorf("%w: %v", ErrWriteFailed, err)
+		return 0, fmt.Errorf("%w: %w", ErrWriteFailed, err)
 	}
 	return result.ModifiedCount, nil
 }

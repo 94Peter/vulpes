@@ -10,6 +10,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"google.golang.org/genproto/googleapis/rpc/errdetails"
 	"google.golang.org/grpc/codes"
 )
@@ -30,10 +31,10 @@ func TestGobCodec(t *testing.T) {
 	data := testStruct{Name: "test", Age: 10}
 
 	encoded, err := codec.Encode(data)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 
 	decoded, err := codec.Decode(encoded)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	assert.Equal(t, data, decoded)
 	assert.Equal(t, GOB, codec.Method())
 }
@@ -43,10 +44,10 @@ func TestMsgPackCodec(t *testing.T) {
 	data := testStruct{Name: "test", Age: 10}
 
 	encoded, err := codec.Encode(data)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 
 	decoded, err := codec.Decode(encoded)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	assert.Equal(t, data, decoded)
 	assert.Equal(t, MSGPACK, codec.Method())
 }
@@ -62,18 +63,18 @@ func TestEncodeDecode(t *testing.T) {
 	t.Run("GOB", func(t *testing.T) {
 		defaultCodeMethod = GOB
 		encoded, err := Encode(data)
-		assert.NoError(t, err)
+		require.NoError(t, err)
 		decoded, err := Decode[testStruct](encoded)
-		assert.NoError(t, err)
+		require.NoError(t, err)
 		assert.Equal(t, data, decoded)
 	})
 
 	t.Run("MSGPACK", func(t *testing.T) {
 		defaultCodeMethod = MSGPACK
 		encoded, err := Encode(data)
-		assert.NoError(t, err)
+		require.NoError(t, err)
 		decoded, err := Decode[testStruct](encoded)
-		assert.NoError(t, err)
+		require.NoError(t, err)
 		assert.Equal(t, data, decoded)
 	})
 }
@@ -88,14 +89,14 @@ func TestDecodeError(t *testing.T) {
 		defaultCodeMethod = GOB
 		t.Run("InvalidBase64", func(t *testing.T) {
 			_, err := Decode[testStruct]("invalid base64")
-			assert.Error(t, err)
+			require.Error(t, err)
 			assert.ErrorIs(t, err, ErrBase64DecodeFailed)
 		})
 
 		t.Run("InvalidGob", func(t *testing.T) {
 			// "invalid gob" base64 encoded
 			_, err := Decode[testStruct]("aW52YWxpZCBnb2I=")
-			assert.Error(t, err)
+			require.Error(t, err)
 			assert.ErrorIs(t, err, ErrGobDecodeFailed)
 		})
 	})
@@ -104,14 +105,14 @@ func TestDecodeError(t *testing.T) {
 		defaultCodeMethod = MSGPACK
 		t.Run("InvalidBase64", func(t *testing.T) {
 			_, err := Decode[testStruct]("invalid base64")
-			assert.Error(t, err)
+			require.Error(t, err)
 			assert.ErrorIs(t, err, ErrBase64DecodeFailed)
 		})
 
 		t.Run("InvalidMsgPack", func(t *testing.T) {
 			// "invalid msgpack" base64 encoded
 			_, err := Decode[testStruct]("aW52YWxpZCBtc2dwYWNr")
-			assert.Error(t, err)
+			require.Error(t, err)
 			assert.ErrorIs(t, err, ErrMsgPackDecodeFailed)
 		})
 	})
@@ -141,11 +142,11 @@ func TestUnknownCodecMethod(t *testing.T) {
 	defaultCodeMethod = "unknown"
 
 	_, err := Encode(testStruct{Name: "test", Age: 10})
-	assert.Error(t, err)
-	assert.ErrorIs(t, err, ErrUnknownCodecMethod)
+	require.Error(t, err)
+	require.ErrorIs(t, err, ErrUnknownCodecMethod)
 
 	_, err = Decode[testStruct]("some string")
-	assert.Error(t, err)
+	require.Error(t, err)
 	assert.ErrorIs(t, err, ErrUnknownCodecMethod)
 }
 

@@ -5,9 +5,11 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/94peter/vulpes/db/mgo"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"go.mongodb.org/mongo-driver/v2/bson"
+
+	"github.com/94peter/vulpes/db/mgo"
 )
 
 // func TestPipeFindOne(t *testing.T) {
@@ -46,7 +48,7 @@ func TestUpdateMany(t *testing.T) {
 		expectedModifiedCount := int64(2)
 
 		mockDB := &mgo.MockDatastore{
-			OnUpdateMany: func(ctx context.Context, collection string, f bson.D, u bson.D) (int64, error) {
+			OnUpdateMany: func(_ context.Context, collection string, f bson.D, u bson.D) (int64, error) {
 				assert.Equal(t, "users", collection)
 				assert.Equal(t, filter, f)
 				assert.Equal(t, update, u)
@@ -60,7 +62,7 @@ func TestUpdateMany(t *testing.T) {
 		modifiedCount, err := mgo.UpdateMany(context.Background(), &testUser{}, filter, update)
 
 		// Assert
-		assert.NoError(t, err)
+		require.NoError(t, err)
 		assert.Equal(t, expectedModifiedCount, modifiedCount)
 	})
 
@@ -71,7 +73,7 @@ func TestUpdateMany(t *testing.T) {
 		expectedErr := errors.New("datastore update many failed")
 
 		mockDB := &mgo.MockDatastore{
-			OnUpdateMany: func(ctx context.Context, collection string, f bson.D, u bson.D) (int64, error) {
+			OnUpdateMany: func(_ context.Context, _ string, _, _ bson.D) (int64, error) {
 				return 0, expectedErr
 			},
 		}
@@ -83,7 +85,7 @@ func TestUpdateMany(t *testing.T) {
 
 		// Assert
 		assert.Zero(t, modifiedCount)
-		assert.Error(t, err)
+		require.Error(t, err)
 		assert.ErrorIs(t, err, expectedErr)
 	})
 }

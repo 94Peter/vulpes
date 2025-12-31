@@ -13,6 +13,7 @@ import (
 	csrf "github.com/utrack/gin-csrf"
 	"go.opentelemetry.io/contrib/instrumentation/github.com/gin-gonic/gin/otelgin"
 
+	"github.com/94peter/vulpes/constant"
 	"github.com/94peter/vulpes/ezapi/session/store"
 	"github.com/94peter/vulpes/log"
 )
@@ -47,6 +48,8 @@ func (c *config) prependMiddlewares(mids ...gin.HandlerFunc) {
 	c.Middlewares = append(mids, c.Middlewares...)
 }
 
+const defaultPort = 8080
+
 var (
 	// engine is the singleton gin.Engine instance.
 	engine *gin.Engine
@@ -60,7 +63,7 @@ var (
 	myStore store.Store
 
 	defaultConfig = config{
-		Port: 8080,
+		Port: defaultPort,
 		Session: struct {
 			Enable     bool
 			Store      string
@@ -158,7 +161,7 @@ func server(cfg *config) *http.Server {
 					csrf.Options{
 						Secret: cfg.CSRF.Secret,
 						ErrorFunc: func(c *gin.Context) {
-							c.String(400, "CSRF token mismatch")
+							c.String(http.StatusBadRequest, "CSRF token mismatch")
 							log.Warn("csrf token mismatch")
 							c.Abort()
 						},
@@ -181,7 +184,10 @@ func server(cfg *config) *http.Server {
 
 	return &http.Server{
 		Addr:              portStr,
-		ReadHeaderTimeout: 3 * time.Second,
+		ReadHeaderTimeout: constant.DefaultReadHeaderTimeout,
+		ReadTimeout:       constant.DefaultReadTimeout,
+		WriteTimeout:      constant.DefaultWriteTimeout,
+		IdleTimeout:       constant.DefaultIdleTimeout,
 		Handler:           engine,
 	}
 }
@@ -213,14 +219,14 @@ func RunGin(ctx context.Context, opts ...option) error {
 		for {
 			if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
 				log.Info("api service listen failed: " + err.Error())
-				time.Sleep(5 * time.Second)
+				time.Sleep(constant.DefaultTimeout)
 			} else if err == http.ErrServerClosed {
 				return
 			}
 		}
 	}(ser)
 	<-ctx.Done()
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), constant.DefaultTimeout)
 	defer cancel()
 	if err := ser.Shutdown(ctx); err != nil {
 		log.Fatal("Server forced to shutdown failed: " + err.Error())

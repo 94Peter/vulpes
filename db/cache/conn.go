@@ -5,7 +5,18 @@ import (
 	"sync"
 	"time"
 
+	"github.com/94peter/vulpes/constant"
 	"github.com/go-redis/redis/v8"
+)
+
+const (
+	defaultPoolSize     = 10
+	defaultMinIdleConns = 3
+	defaultDialTime     = constant.DefaultTimeout
+	defaultReadTimeout  = 3 * time.Second
+	defaultWriteTimeout = defaultReadTimeout
+	defaultIdleTimeout  = constant.DefaultIdleTimeout
+	defaultPoolTimeout  = constant.DefaultIdleTimeout
 )
 
 var (
@@ -13,13 +24,13 @@ var (
 	once sync.Once
 
 	defaultOptions = &redis.Options{
-		PoolSize:     10,
-		MinIdleConns: 3,
-		DialTimeout:  5 * time.Second,
-		ReadTimeout:  3 * time.Second,
-		WriteTimeout: 3 * time.Second,
-		PoolTimeout:  4 * time.Second,
-		IdleTimeout:  5 * time.Minute,
+		PoolSize:     defaultPoolSize,
+		MinIdleConns: defaultMinIdleConns,
+		DialTimeout:  defaultDialTime,
+		ReadTimeout:  defaultReadTimeout,
+		WriteTimeout: defaultWriteTimeout,
+		PoolTimeout:  defaultPoolTimeout,
+		IdleTimeout:  defaultIdleTimeout,
 	}
 )
 
@@ -59,7 +70,7 @@ func InitConnection(opts ...initConnOpt) error {
 		}
 		conn = redis.NewClient(defaultOptions)
 	})
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), constant.DefaultTimeout)
 	defer cancel()
 	if conn.Ping(ctx).Val() != "PONG" {
 		return ErrCacheNotConnected

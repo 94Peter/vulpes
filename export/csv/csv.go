@@ -127,6 +127,8 @@ func Write(out io.Writer, data CSVMarshaler, opts ...Option) error {
 	return nil
 }
 
+const storageDefaultExpireTime = 20 * time.Minute
+
 func Upload(
 	ctx context.Context, storage storage.Storage, key string,
 	data CSVMarshaler, opts ...Option,
@@ -140,5 +142,5 @@ func Upload(
 	if err != nil {
 		return "", fmt.Errorf("faile to update to storage: %w", err)
 	}
-	return storage.SignedDownloadUrl(ctx, key, 20*time.Minute)
+	return storage.SignedDownloadUrl(ctx, key, storageDefaultExpireTime)
 }

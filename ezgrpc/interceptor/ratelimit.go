@@ -63,8 +63,10 @@ func (l *ipRateLimiter) UnaryServerInterceptor() grpc.UnaryServerInterceptor {
 	}
 }
 
+const defaultRequestPerSecond = 10
+const defaultBurst = 20
+
 var (
-	// Default to 10 requests per second with a burst of 20.
-	rateLimiter          = newIPRateLimiter(10, 20)
+	rateLimiter          = newIPRateLimiter(defaultRequestPerSecond, defaultBurst)
 	rateLimitInterceptor = rateLimiter.UnaryServerInterceptor()
 )

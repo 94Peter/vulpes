@@ -82,10 +82,11 @@ var (
 		} else {
 			// If the error is not a MultiError type (e.g., only one error, or a non-validate error)
 			// Try to parse it as a FieldViolation, or handle it as a generic error
-			parts := strings.SplitN(err.Error(), ": ", 2)
+			const expectSplitNum = 2
+			parts := strings.SplitN(err.Error(), ": ", expectSplitNum)
 			field := "unknown"
 			description := err.Error()
-			if len(parts) == 2 {
+			if len(parts) == expectSplitNum {
 				field = parts[0]
 				description = parts[1]
 			}

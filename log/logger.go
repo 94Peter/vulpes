@@ -29,11 +29,13 @@ type Config struct {
 	Env         string // Env is the environment the service is running in.
 }
 
+const defaultCallerSkip = 2
+
 // defaultConfig provides a sensible default configuration for the logger.
 var defaultConfig = Config{
 	Development: true,
 	Level:       "debug",
-	CallerSkip:  2,
+	CallerSkip:  defaultCallerSkip,
 	Env:         "dev",
 }
 

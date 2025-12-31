@@ -8,8 +8,8 @@ import (
 	"net"
 	"net/http"
 	"strings"
-	"time"
 
+	"github.com/94peter/vulpes/constant"
 	"github.com/94peter/vulpes/ezgrpc/interceptor"
 	"github.com/94peter/vulpes/log"
 
@@ -163,10 +163,10 @@ func RunGrpcGateway(ctx context.Context, port int) error {
 
 	gwServer := &http.Server{
 		Handler:           handlerFunc(grpcService, router),
-		ReadHeaderTimeout: 5 * time.Second,
-		ReadTimeout:       15 * time.Second,
-		WriteTimeout:      15 * time.Second,
-		IdleTimeout:       60 * time.Second,
+		ReadHeaderTimeout: constant.DefaultReadHeaderTimeout,
+		ReadTimeout:       constant.DefaultReadTimeout,
+		WriteTimeout:      constant.DefaultWriteTimeout,
+		IdleTimeout:       constant.DefaultIdleTimeout,
 	}
 	log.Info("Serving on " + portStr)
 	return gwServer.Serve(lis)
@@ -208,10 +208,10 @@ func runServe(ctx context.Context, port int, httpHandler http.Handler) error {
 	reflection.Register(grpcService)
 	gwServer := &http.Server{
 		Handler:           handlerFunc(grpcService, httpHandler),
-		ReadHeaderTimeout: 5 * time.Second,
-		ReadTimeout:       15 * time.Second,
-		WriteTimeout:      15 * time.Second,
-		IdleTimeout:       60 * time.Second,
+		ReadHeaderTimeout: constant.DefaultReadHeaderTimeout,
+		ReadTimeout:       constant.DefaultReadTimeout,
+		WriteTimeout:      constant.DefaultWriteTimeout,
+		IdleTimeout:       constant.DefaultIdleTimeout,
 	}
 	log.Info(fmt.Sprintf("Serving on :%d", port))
 	return gwServer.Serve(lis)
@@ -220,7 +220,7 @@ func runServe(ctx context.Context, port int, httpHandler http.Handler) error {
 func getNetListen(ctx context.Context, port int) (net.Listener, error) {
 	lc := net.ListenConfig{
 		// 這裡可以設置 KeepAlive 時間或其他選項
-		KeepAlive: 3 * time.Minute,
+		KeepAlive: constant.DefaultKeepAlive,
 	}
 	portStr := fmt.Sprintf(":%d", port)
 	// 傳入 context，讓啟動過程也受 context 控管

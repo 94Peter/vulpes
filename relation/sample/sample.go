@@ -3,8 +3,8 @@ package main
 import (
 	"context"
 	"fmt"
-	"time"
 
+	"github.com/94peter/vulpes/constant"
 	"github.com/94peter/vulpes/log"
 
 	pb "github.com/ory/keto/proto/ory/keto/relation_tuples/v1alpha2"
@@ -27,7 +27,7 @@ func main() {
 		}
 	}()
 
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), constant.DefaultTimeout)
 	defer cancel()
 
 	// Create a new ReadServiceClient.

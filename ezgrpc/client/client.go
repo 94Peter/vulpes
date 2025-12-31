@@ -17,6 +17,7 @@ import (
 	"google.golang.org/protobuf/types/descriptorpb"
 	"google.golang.org/protobuf/types/dynamicpb"
 
+	"github.com/94peter/vulpes/constant"
 	"github.com/94peter/vulpes/log"
 )
 
@@ -133,10 +134,10 @@ func (c *client) getOrCreateConn(address string) (*grpc.ClientConn, error) {
 		grpc.WithTransportCredentials(insecure.NewCredentials()),
 		grpc.WithConnectParams(grpc.ConnectParams{
 			Backoff: backoff.Config{
-				BaseDelay:  500 * time.Millisecond,
-				Multiplier: 1.1,
-				Jitter:     0.1,
-				MaxDelay:   3 * time.Second,
+				BaseDelay:  constant.DefaultBackoffBaseDelay,
+				Multiplier: constant.DefaultBackoffMultiplier,
+				Jitter:     constant.DefaultBackoffJitter,
+				MaxDelay:   constant.DefaultBackoffMaxDelay,
 			},
 			MinConnectTimeout: c.timeout,
 		}),

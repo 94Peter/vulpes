@@ -12,6 +12,7 @@ import (
 	"go.mongodb.org/mongo-driver/v2/bson"
 	"go.mongodb.org/mongo-driver/v2/mongo/options"
 
+	"github.com/94peter/vulpes/constant"
 	"github.com/94peter/vulpes/db/mgo"
 
 	mysession "github.com/94peter/vulpes/ezapi/session"
@@ -85,7 +86,7 @@ func (m *mongoStore) New(r *http.Request, name string) (*sessions.Session, error
 
 // Save should persist session to the underlying store implementation.
 func (m *mongoStore) Save(r *http.Request, w http.ResponseWriter, session *sessions.Session) error {
-	ctx, cancel := context.WithTimeout(r.Context(), time.Second*2)
+	ctx, cancel := context.WithTimeout(r.Context(), constant.DefaultTimeout)
 	defer cancel()
 	if session.Options.MaxAge < 0 {
 		if err := m.delete(ctx, session); err != nil {

@@ -10,7 +10,10 @@ import (
 	"github.com/94peter/vulpes/db/mgo"
 )
 
-const sessionCollectionName = "ezapi_sessions"
+const (
+	sessionCollectionName = "ezapi_sessions"
+	expireSeconds         = 3600 // 1 hour
+)
 
 func init() {
 	mgo.RegisterIndex(sessionsCollection)
@@ -20,7 +23,7 @@ var sessionsCollection = mgo.NewCollectDef(sessionCollectionName, func() []mongo
 	return []mongo.IndexModel{
 		{
 			Keys:    bson.D{{Key: "modified", Value: 1}},
-			Options: options.Index().SetExpireAfterSeconds(3600), // 1 hour
+			Options: options.Index().SetExpireAfterSeconds(expireSeconds), // 1 hour
 		},
 	}
 })

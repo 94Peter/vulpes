@@ -7,6 +7,11 @@ import (
 	"github.com/weaviate/weaviate-go-client/v5/weaviate/graphql"
 )
 
+const (
+	defaultBiasAlpha  = 0.2
+	defaultQueryLimit = 3
+)
+
 type querySDK interface {
 	Query(ctx context.Context, className string) error
 	FindRelated(ctx context.Context, className string, relatedText string) error
@@ -30,7 +35,7 @@ func (sdk *weaviateSdk) FindRelated(_ context.Context, className string, related
 		WithNearText(sdk.clt.GraphQL().NearTextArgBuilder().
 			WithConcepts(concepts),
 		).
-		WithLimit(3). // 只返回最相關的前 3 個課程
+		WithLimit(defaultQueryLimit). // 只返回最相關的前 3 個課程
 		Do(context.Background())
 
 	if err != nil {
@@ -44,16 +49,15 @@ func (sdk *weaviateSdk) FindRelated(_ context.Context, className string, related
 }
 
 func (sdk *weaviateSdk) Query(ctx context.Context, className string) error {
-	fmt.Println("Query", className)
 	// weaknessPoints := []string{"畢氏定理", "JHC02"}
 	result, err := sdk.clt.GraphQL().Get().WithClassName(className).
 		WithFields(graphql.Field{Name: "course_name"}, graphql.Field{Name: "knowledge_coverage"}).
 		WithHybrid(
 			sdk.clt.GraphQL().HybridArgumentBuilder().
-				WithAlpha(0.2).
+				WithAlpha(defaultBiasAlpha).
 				WithQuery("文言文 代數").WithProperties([]string{"course_name", "knowledge_coverage"}),
 		).
-		WithLimit(2).Do(ctx)
+		WithLimit(defaultQueryLimit).Do(ctx)
 	if err != nil {
 		return err
 	}

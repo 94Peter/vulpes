@@ -16,6 +16,8 @@ type modelsClassBuilder struct {
 	class *models.Class
 }
 
+const defaultVectorizerDimensions = 256
+
 func NewModelsClassBuilder(name, description string) ModelsClassBuilder {
 	return &modelsClassBuilder{
 		class: &models.Class{
@@ -27,7 +29,7 @@ func NewModelsClassBuilder(name, description string) ModelsClassBuilder {
 					Vectorizer: map[string]any{
 						"text2vec-weaviate": map[string]any{
 							"model":      "Snowflake/snowflake-arctic-embed-m-v1.5",
-							"dimensions": 256,
+							"dimensions": defaultVectorizerDimensions,
 						},
 					},
 				},

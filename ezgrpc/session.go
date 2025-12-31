@@ -51,13 +51,15 @@ var (
 	sessionSecret = "your-very-secret-key"
 )
 
+const maxAgeSecond = 600 // 10minutes
+
 // InitSessionStore initializes the session store with a secret key and configures session options.
 func InitSessionStore() {
 	store = sessions.NewCookieStore([]byte(sessionSecret))
 	// Set session options (e.g., Secure, HttpOnly, SameSite)
 	store.Options = &sessions.Options{
 		Path:     "/",
-		MaxAge:   60 * 10, // 10 minutes
+		MaxAge:   maxAgeSecond,
 		HttpOnly: true,
 		Secure:   false, // Set to true in production with HTTPS
 		SameSite: http.SameSiteLaxMode,

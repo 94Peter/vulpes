@@ -95,7 +95,10 @@ func (cw *Writer) close() error {
 	if cw.closed {
 		return errors.New("already closed")
 	}
-	cw.flush()
+	err := cw.flush()
+	if err != nil {
+		return err
+	}
 	cw.closed = true
 	return nil
 }

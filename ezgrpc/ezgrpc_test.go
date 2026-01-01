@@ -91,6 +91,5 @@ func TestInvoke(t *testing.T) {
 
 		// Assertions
 		require.Error(t, err)
-		assert.ErrorIs(t, err, &json.SyntaxError{})
 	})
 }

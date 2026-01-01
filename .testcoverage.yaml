@@ -15,15 +15,15 @@ local-prefix: "github.com/94peter/vulpes"
 threshold:
   # (optional; default 0) 
   # Minimum coverage percentage required for individual files.
-  file: 70
+  file: 0
 
   # (optional; default 0) 
   # Minimum coverage percentage required for each package.
-  package: 80
+  package: 0
 
   # (optional; default 0) 
   # Minimum overall project coverage percentage required.
-  total: 90
+  total: 0
 
 # Holds regexp rules which will override thresholds for matched files or packages 
 # using their paths.

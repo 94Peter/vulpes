@@ -11,6 +11,7 @@ import (
 	"go.mongodb.org/mongo-driver/v2/mongo/options"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
+	"go.opentelemetry.io/otel/trace/noop"
 )
 
 // SetDatastore replaces the default datastore with a mock for testing.
@@ -159,7 +160,11 @@ func (*MockDatastore) getClient() *mongo.Client {
 
 func (m *MockDatastore) startTraceSpan(
 	ctx context.Context, name string, attributes ...attribute.KeyValue) (context.Context, trace.Span) {
-	return m.OnStartTraceSpan(ctx, name, attributes...)
+	if m.OnStartTraceSpan != nil {
+		return m.OnStartTraceSpan(ctx, name, attributes...)
+	}
+	tracer := noop.NewTracerProvider().Tracer("mongo")
+	return tracer.Start(ctx, name, trace.WithAttributes(attributes...))
 }
 
 // Interface implementations for MockBulkOperator

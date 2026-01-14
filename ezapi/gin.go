@@ -2,7 +2,6 @@ package ezapi
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"net/http"
 	"slices"
@@ -14,7 +13,6 @@ import (
 	csrf "github.com/utrack/gin-csrf"
 	"go.opentelemetry.io/contrib/instrumentation/github.com/gin-gonic/gin/otelgin"
 
-	"github.com/94peter/vulpes/constant"
 	"github.com/94peter/vulpes/ezapi/session/store"
 	"github.com/94peter/vulpes/log"
 )
@@ -39,6 +37,7 @@ type config struct {
 	Tracer      struct {
 		Enable bool
 	}
+	Routers RouterGroup
 }
 
 func (c *config) appendMiddlewares(mids ...gin.HandlerFunc) {
@@ -49,76 +48,11 @@ func (c *config) prependMiddlewares(mids ...gin.HandlerFunc) {
 	c.Middlewares = append(mids, c.Middlewares...)
 }
 
-func (cfg *config) initSession() error {
-	if cfg.Session.Enable {
-		if cfg.Session.Store == "" {
-			return errors.New("session store is required")
-		}
-		if cfg.Session.CookieName == "" {
-			return errors.New("session name is required")
-		}
-		if cfg.Session.MaxAge == 0 {
-			return errors.New("session max age is required")
-		}
-		if len(cfg.Session.KeyPairs) == 0 {
-			return errors.New("session key pairs is required")
-		}
-		myStore = store.NewStore(cfg.Session.Store, cfg.Session.MaxAge, cfg.Session.KeyPairs...)
-		if myStore == nil {
-			return errors.New("session store is not supported: " + cfg.Session.Store)
-		}
-
-		for _, injector := range sessionInjectors {
-			injector.InjectSessionStore(myStore, cfg.Session.CookieName)
-		}
-		cfg.prependMiddlewares(sessions.Sessions(cfg.Session.CookieName, myStore))
-	}
-	return nil
-}
-
-func (cfg *config) initCSRF() error {
-	if cfg.CSRF.Enable {
-		if !cfg.Session.Enable {
-			return errors.New("csrf requires session")
-		}
-		if cfg.CSRF.Secret == "" {
-			return errors.New("csrf secret is required")
-		}
-		if cfg.CSRF.FieldName == "" {
-			return errors.New("csrf field name is required")
-		}
-		cfg.appendMiddlewares(
-			csrfProtectionWithExclusion(
-				csrf.Middleware(
-					csrf.Options{
-						Secret: cfg.CSRF.Secret,
-						ErrorFunc: func(c *gin.Context) {
-							c.String(http.StatusBadRequest, "CSRF token mismatch")
-							log.Warn("csrf token mismatch")
-							c.Abort()
-						},
-					},
-				),
-				cfg.CSRF.ExcludePaths,
-			),
-			func(c *gin.Context) {
-				if !slices.Contains(cfg.CSRF.ExcludePaths, c.Request.URL.Path) {
-					c.Request = c.Request.WithContext(context.WithValue(c.Request.Context(), _CtxKeyCSRF, csrf.GetToken(c)))
-				}
-				c.Next()
-			},
-		)
-	}
-	return nil
-}
-
-const defaultPort = 8080
-
 var (
 	// engine is the singleton gin.Engine instance.
 	engine *gin.Engine
 	// routers holds all the registered routes before the engine is initialized.
-	routers = newRouterGroup()
+	routers = NewRouterGroup()
 	// defaultMiddelware is the set of default middleware used by the gin engine.
 	defaultMiddelware = []gin.HandlerFunc{
 		gin.Recovery(),
@@ -127,7 +61,7 @@ var (
 	myStore store.Store
 
 	defaultConfig = config{
-		Port: defaultPort,
+		Port: 8080,
 		Session: struct {
 			Enable     bool
 			Store      string
@@ -152,7 +86,7 @@ var (
 
 // RegisterGinApi allows for the registration of API routes using a function.
 // This function can be called from anywhere to add routes to the central routerGroup.
-func RegisterGinApi(f func(router Router)) {
+func RegisterGinApi(f func(router RouterGroup)) {
 	f(routers)
 }
 
@@ -173,27 +107,75 @@ func initEngin(cfg *config) {
 			engine.StaticFS(k, fs)
 		}
 		engine.Use(cfg.Middlewares...)
+		// 評估留一種方法即可
 		routers.register(engine)
+		// 擴充從Cfx可以註冊Router
+		if cfg.Routers != nil {
+			cfg.Routers.register(engine)
+		}
 	})
 }
-
-type contextKey string
-
-const _CtxKeyCSRF = contextKey("gorilla.csrf.Token")
 
 // server creates and configures an *http.Server with the gin engine as its handler.
 func server(cfg *config) *http.Server {
 	portStr := fmt.Sprintf(":%d", cfg.Port)
 	log.Info("api service listen on port " + portStr)
-	var err error
-	if err = cfg.initSession(); err != nil {
-		panic(err)
+	if cfg.Session.Enable {
+		if cfg.Session.Store == "" {
+			panic("session store is required")
+		}
+		if cfg.Session.CookieName == "" {
+			panic("session name is required")
+		}
+		if cfg.Session.MaxAge == 0 {
+			panic("session max age is required")
+		}
+		if len(cfg.Session.KeyPairs) == 0 {
+			panic("session key pairs is required")
+		}
+		myStore = store.NewStore(cfg.Session.Store, cfg.Session.MaxAge, cfg.Session.KeyPairs...)
+		if myStore == nil {
+			panic("session store is not supported: " + cfg.Session.Store)
+		}
+
+		for _, injector := range sessionInjectors {
+			injector.InjectSessionStore(myStore, cfg.Session.CookieName)
+		}
+		cfg.prependMiddlewares(sessions.Sessions(cfg.Session.CookieName, myStore))
 	}
 
-	if err = cfg.initCSRF(); err != nil {
-		panic(err)
+	if cfg.CSRF.Enable {
+		if !cfg.Session.Enable {
+			panic("csrf requires session")
+		}
+		if cfg.CSRF.Secret == "" {
+			panic("csrf secret is required")
+		}
+		if cfg.CSRF.FieldName == "" {
+			panic("csrf field name is required")
+		}
+		cfg.appendMiddlewares(
+			csrfProtectionWithExclusion(
+				csrf.Middleware(
+					csrf.Options{
+						Secret: cfg.CSRF.Secret,
+						ErrorFunc: func(c *gin.Context) {
+							c.String(400, "CSRF token mismatch")
+							log.Warn("csrf token mismatch")
+							c.Abort()
+						},
+					},
+				),
+				cfg.CSRF.ExcludePaths,
+			),
+			func(c *gin.Context) {
+				if !slices.Contains(cfg.CSRF.ExcludePaths, c.Request.URL.Path) {
+					c.Request = c.Request.WithContext(context.WithValue(c.Request.Context(), "gorilla.csrf.Token", csrf.GetToken(c)))
+				}
+				c.Next()
+			},
+		)
 	}
-
 	if cfg.Tracer.Enable {
 		cfg.prependMiddlewares(otelgin.Middleware("API Server"))
 	}
@@ -201,10 +183,7 @@ func server(cfg *config) *http.Server {
 
 	return &http.Server{
 		Addr:              portStr,
-		ReadHeaderTimeout: constant.DefaultReadHeaderTimeout,
-		ReadTimeout:       constant.DefaultReadTimeout,
-		WriteTimeout:      constant.DefaultWriteTimeout,
-		IdleTimeout:       constant.DefaultIdleTimeout,
+		ReadHeaderTimeout: 3 * time.Second,
 		Handler:           engine,
 	}
 }
@@ -236,19 +215,18 @@ func RunGin(ctx context.Context, opts ...option) error {
 		for {
 			if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
 				log.Info("api service listen failed: " + err.Error())
-				time.Sleep(constant.DefaultTimeout)
+				time.Sleep(5 * time.Second)
 			} else if err == http.ErrServerClosed {
 				return
 			}
 		}
 	}(ser)
 	<-ctx.Done()
-	ctx, cancel := context.WithTimeout(context.Background(), constant.DefaultTimeout)
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
 	if err := ser.Shutdown(ctx); err != nil {
-		cancel()
 		log.Fatal("Server forced to shutdown failed: " + err.Error())
 	}
-	cancel()
 	apiWait.Wait()
 	return nil
 }

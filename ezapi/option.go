@@ -8,9 +8,15 @@ import (
 
 type option func(*config)
 
-func WithPort(port uint16) option {
+func WithRouterGroup(routerGroup RouterGroup) option {
 	return func(c *config) {
-		c.Port = port
+		c.Routers = routerGroup
+	}
+}
+
+func WithPort(port int) option {
+	return func(c *config) {
+		c.Port = uint16(port)
 	}
 }
 
@@ -38,7 +44,7 @@ func WithSession(enable bool, store string, cookieName string, maxAge int, keyPa
 
 func WithMiddleware(middleware ...gin.HandlerFunc) option {
 	return func(c *config) {
-		c.Middlewares = append(c.Middlewares, middleware...)
+		c.Middlewares = append(defaultMiddelware, middleware...)
 	}
 }
 

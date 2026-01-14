@@ -15,11 +15,16 @@ type Router interface {
 	DELETE(path string, handler gin.HandlerFunc)
 	// register is an internal method to apply the collected routes to a gin.IRouter.
 	register(r gin.IRouter)
+}
+
+type RouterGroup interface {
+	Router
+	Group(name string) Router
 	ToString() string
 }
 
 // newRouterGroup creates a new instance of a routerGroup.
-func newRouterGroup() Router {
+func NewRouterGroup() RouterGroup {
 	return &routerGroup{}
 }
 
@@ -30,34 +35,78 @@ type router struct {
 	handler gin.HandlerFunc
 }
 
-// routerGroup holds a collection of routes that will be registered with the gin engine.
-type routerGroup struct {
-	routers []*router
+type routerList []router
+
+// register iterates through the collected routes and applies them to the provided gin.IRouter.
+func (rg routerList) register(r gin.IRouter) {
+	registerRouter(r, rg)
 }
 
 // GET adds a new GET route to the group.
-func (rg *routerGroup) GET(path string, handler gin.HandlerFunc) {
-	rg.routers = append(rg.routers, &router{"GET", path, handler})
+func (rl *routerList) GET(path string, handler gin.HandlerFunc) {
+	*rl = append(*rl, router{
+		method:  "GET",
+		path:    path,
+		handler: handler,
+	})
 }
 
 // POST adds a new POST route to the group.
-func (rg *routerGroup) POST(path string, handler gin.HandlerFunc) {
-	rg.routers = append(rg.routers, &router{"POST", path, handler})
+func (rl *routerList) POST(path string, handler gin.HandlerFunc) {
+	*rl = append(*rl, router{
+		method:  "POST",
+		path:    path,
+		handler: handler,
+	})
 }
 
 // PUT adds a new PUT route to the group.
-func (rg *routerGroup) PUT(path string, handler gin.HandlerFunc) {
-	rg.routers = append(rg.routers, &router{"PUT", path, handler})
+func (rl *routerList) PUT(path string, handler gin.HandlerFunc) {
+	*rl = append(*rl, router{
+		method:  "PUT",
+		path:    path,
+		handler: handler,
+	})
 }
 
 // DELETE adds a new DELETE route to the group.
-func (rg *routerGroup) DELETE(path string, handler gin.HandlerFunc) {
-	rg.routers = append(rg.routers, &router{"DELETE", path, handler})
+func (rl *routerList) DELETE(path string, handler gin.HandlerFunc) {
+	*rl = append(*rl, router{
+		method:  "DELETE",
+		path:    path,
+		handler: handler,
+	})
+}
+
+// routerGroup holds a collection of routes that will be registered with the gin engine.
+type routerGroup struct {
+	routerList
+	group map[string]*routerList
+}
+
+func (rg *routerGroup) Group(name string) Router {
+	if rg.group == nil {
+		rg.group = make(map[string]*routerList)
+	}
+	newRouterList := &routerList{}
+	rg.group[name] = newRouterList
+	return newRouterList
 }
 
 // register iterates through the collected routes and applies them to the provided gin.IRouter.
 func (rg *routerGroup) register(r gin.IRouter) {
-	for _, router := range rg.routers {
+	if len(rg.routerList) > 0 {
+		registerRouter(r, rg.routerList)
+	}
+	for name, group := range rg.group {
+		ginRouterGroup := r.Group(name)
+		registerRouter(ginRouterGroup, *group)
+
+	}
+}
+
+func registerRouter(r gin.IRouter, routers []router) {
+	for _, router := range routers {
 		switch router.method {
 		case "GET":
 			r.GET(router.path, router.handler)
@@ -73,5 +122,5 @@ func (rg *routerGroup) register(r gin.IRouter) {
 
 // ToString returns a string representation of the routerGroup, including the number of routes.
 func (rg *routerGroup) ToString() string {
-	return "routerGroup" + strconv.Itoa(len(rg.routers))
+	return "routerGroup" + strconv.Itoa(len(rg.routerList))
 }

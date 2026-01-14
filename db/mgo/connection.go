@@ -5,9 +5,11 @@ package mgo
 import (
 	"context"
 	"errors"
+	"fmt"
 	"sync"
 	"time"
 
+	"github.com/testcontainers/testcontainers-go/modules/mongodb"
 	"go.mongodb.org/mongo-driver/v2/bson"
 	"go.mongodb.org/mongo-driver/v2/mongo"
 	"go.mongodb.org/mongo-driver/v2/mongo/options"
@@ -126,4 +128,23 @@ func IsHealth(ctx context.Context) error {
 		return errors.Join(ErrPingFailed, err)
 	}
 	return nil
+}
+
+func InitTestContainer(ctx context.Context) (func(), error) {
+	mongodbContainer, err := mongodb.Run(ctx, "mongo:6.0")
+	if err != nil {
+		return nil, err
+	}
+	endpoint, err := mongodbContainer.ConnectionString(ctx)
+	if err != nil {
+		return nil, err
+	}
+	// 回傳一個簡單的 cleanup function
+	cleanup := func() {
+		if err := mongodbContainer.Terminate(context.Background()); err != nil {
+			fmt.Printf("failed to terminate container: %s\n", err)
+		}
+	}
+	return cleanup,
+		InitConnection(ctx, "test", noop.NewTracerProvider().Tracer("mongo"), WithURI(endpoint))
 }

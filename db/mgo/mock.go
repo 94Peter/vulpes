@@ -11,7 +11,6 @@ import (
 	"go.mongodb.org/mongo-driver/v2/mongo/options"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
-	"go.opentelemetry.io/otel/trace/noop"
 )
 
 // SetDatastore replaces the default datastore with a mock for testing.
@@ -34,21 +33,13 @@ func SetDatastore(mock Datastore) (restore func()) {
 // It allows for setting mock functions for each method, making it easy to
 // control the behavior of the datastore in tests.
 type MockDatastore struct {
-	OnSave func(ctx context.Context, doc DocInter) (DocInter, error)
-	OnFind func(
-		ctx context.Context, collection string, filter any,
-		opts ...options.Lister[options.FindOptions],
-	) (*mongo.Cursor, error)
-	OnFindOne func(
-		ctx context.Context, collection string, filter any,
-		opts ...options.Lister[options.FindOneOptions],
-	) *mongo.SingleResult
-	OnUpdateOne  func(ctx context.Context, collection string, filter bson.D, update bson.D) (int64, error)
-	OnUpdateMany func(ctx context.Context, collection string, filter bson.D, update bson.D) (int64, error)
-	OnReplaceOne func(
-		ctx context.Context, collection string, filter any, replacement any,
-		opts ...options.Lister[options.ReplaceOptions],
-	) (*mongo.UpdateResult, error)
+	OnSave             func(ctx context.Context, doc DocInter) (DocInter, error)
+	OnCountDocument    func(ctx context.Context, collectionName string, filter any) (int64, error)
+	OnFind             func(ctx context.Context, collection string, filter any, opts ...options.Lister[options.FindOptions]) (*mongo.Cursor, error)
+	OnFindOne          func(ctx context.Context, collection string, filter any, opts ...options.Lister[options.FindOneOptions]) *mongo.SingleResult
+	OnUpdateOne        func(ctx context.Context, collection string, filter bson.D, update bson.D) (int64, error)
+	OnUpdateMany       func(ctx context.Context, collection string, filter bson.D, update bson.D) (int64, error)
+	OnReplaceOne       func(ctx context.Context, collection string, filter any, replacement any, opts ...options.Lister[options.ReplaceOptions]) (*mongo.UpdateResult, error)
 	OnDeleteOne        func(ctx context.Context, collection string, filter bson.D) (int64, error)
 	OnDeleteMany       func(ctx context.Context, collection string, filter bson.D) (int64, error)
 	OnPipeFind         func(ctx context.Context, collection string, pipeline mongo.Pipeline) (*mongo.Cursor, error)
@@ -57,11 +48,8 @@ type MockDatastore struct {
 	OnGetCollection    func(name string) *mongo.Collection
 	OnGetDatabase      func() *mongo.Database
 	OnClose            func(ctx context.Context) error
-	OnDistinct         func(
-		ctx context.Context, collectionName string, field string, filter any,
-		opts ...options.Lister[options.DistinctOptions],
-	) ([]bson.RawValue, error)
-	OnStartTraceSpan func(ctx context.Context, name string, attributes ...attribute.KeyValue) (context.Context, trace.Span)
+	OnDistinct         func(ctx context.Context, collectionName string, field string, filter any, opts ...options.Lister[options.DistinctOptions]) ([]bson.RawValue, error)
+	OnStartTraceSpan   func(ctx context.Context, name string, attributes ...attribute.KeyValue) (context.Context, trace.Span)
 }
 
 // MockBulkOperator is a mock implementation of the BulkOperator interface.
@@ -73,10 +61,7 @@ type MockBulkOperator struct {
 }
 
 // Interface implementations for MockDatastore
-func (m *MockDatastore) Distinct(
-	ctx context.Context, collectionName string, field string, filter any,
-	opts ...options.Lister[options.DistinctOptions],
-) ([]bson.RawValue, error) {
+func (m *MockDatastore) Distinct(ctx context.Context, collectionName string, field string, filter any, opts ...options.Lister[options.DistinctOptions]) ([]bson.RawValue, error) {
 	return m.OnDistinct(ctx, collectionName, field, filter, opts...)
 }
 
@@ -84,37 +69,27 @@ func (m *MockDatastore) Save(ctx context.Context, doc DocInter) (DocInter, error
 	return m.OnSave(ctx, doc)
 }
 
-func (m *MockDatastore) Find(
-	ctx context.Context, collection string, filter any,
-	opts ...options.Lister[options.FindOptions],
-) (*mongo.Cursor, error) {
+func (m *MockDatastore) CountDocument(ctx context.Context, collectionName string, filter any) (int64, error) {
+	return m.OnCountDocument(ctx, collectionName, filter)
+}
+
+func (m *MockDatastore) Find(ctx context.Context, collection string, filter any, opts ...options.Lister[options.FindOptions]) (*mongo.Cursor, error) {
 	return m.OnFind(ctx, collection, filter, opts...)
 }
 
-func (m *MockDatastore) FindOne(
-	ctx context.Context, collection string, filter any,
-	opts ...options.Lister[options.FindOneOptions],
-) *mongo.SingleResult {
+func (m *MockDatastore) FindOne(ctx context.Context, collection string, filter any, opts ...options.Lister[options.FindOneOptions]) *mongo.SingleResult {
 	return m.OnFindOne(ctx, collection, filter, opts...)
 }
 
-func (m *MockDatastore) UpdateOne(
-	ctx context.Context, collection string, filter bson.D, update bson.D,
-	_ ...options.Lister[options.UpdateOneOptions],
-) (int64, error) {
+func (m *MockDatastore) UpdateOne(ctx context.Context, collection string, filter bson.D, update bson.D, opts ...options.Lister[options.UpdateOneOptions]) (int64, error) {
 	return m.OnUpdateOne(ctx, collection, filter, update)
 }
 
-func (m *MockDatastore) UpdateMany(
-	ctx context.Context, collection string, filter bson.D, update bson.D,
-) (int64, error) {
+func (m *MockDatastore) UpdateMany(ctx context.Context, collection string, filter bson.D, update bson.D) (int64, error) {
 	return m.OnUpdateMany(ctx, collection, filter, update)
 }
 
-func (m *MockDatastore) ReplaceOne(
-	ctx context.Context, collection string, filter any, replacement any,
-	opts ...options.Lister[options.ReplaceOptions],
-) (*mongo.UpdateResult, error) {
+func (m *MockDatastore) ReplaceOne(ctx context.Context, collection string, filter any, replacement any, opts ...options.Lister[options.ReplaceOptions]) (*mongo.UpdateResult, error) {
 	return m.OnReplaceOne(ctx, collection, filter, replacement, opts...)
 }
 
@@ -126,15 +101,11 @@ func (m *MockDatastore) DeleteMany(ctx context.Context, collection string, filte
 	return m.OnDeleteMany(ctx, collection, filter)
 }
 
-func (m *MockDatastore) PipeFind(
-	ctx context.Context, collection string, pipeline mongo.Pipeline,
-) (*mongo.Cursor, error) {
+func (m *MockDatastore) PipeFind(ctx context.Context, collection string, pipeline mongo.Pipeline) (*mongo.Cursor, error) {
 	return m.OnPipeFind(ctx, collection, pipeline)
 }
 
-func (m *MockDatastore) PipeFindOne(
-	ctx context.Context, collection string, pipeline mongo.Pipeline,
-) *mongo.SingleResult {
+func (m *MockDatastore) PipeFindOne(ctx context.Context, collection string, pipeline mongo.Pipeline) *mongo.SingleResult {
 	return m.OnPipeFindOne(ctx, collection, pipeline)
 }
 
@@ -154,17 +125,12 @@ func (m *MockDatastore) getDatabase() *mongo.Database {
 	return m.OnGetDatabase()
 }
 
-func (*MockDatastore) getClient() *mongo.Client {
+func (m *MockDatastore) getClient() *mongo.Client {
 	return nil
 }
 
-func (m *MockDatastore) startTraceSpan(
-	ctx context.Context, name string, attributes ...attribute.KeyValue) (context.Context, trace.Span) {
-	if m.OnStartTraceSpan != nil {
-		return m.OnStartTraceSpan(ctx, name, attributes...)
-	}
-	tracer := noop.NewTracerProvider().Tracer("mongo")
-	return tracer.Start(ctx, name, trace.WithAttributes(attributes...))
+func (m *MockDatastore) startTraceSpan(ctx context.Context, name string, attributes ...attribute.KeyValue) (context.Context, trace.Span) {
+	return m.OnStartTraceSpan(ctx, name, attributes...)
 }
 
 // Interface implementations for MockBulkOperator
@@ -198,50 +164,30 @@ func (m *MockBulkOperator) Execute(ctx context.Context) (*mongo.BulkWriteResult,
 // ===================================================================
 
 // NewOnFindMock returns an OnFind function that returns a cursor with the given fake data.
-func NewOnFindMock(fakeData ...any) func(
-	ctx context.Context, collection string, filter any,
-	opts ...options.Lister[options.FindOptions],
-) (*mongo.Cursor, error) {
-	return func(_ context.Context, _ string, _ any,
-		_ ...options.Lister[options.FindOptions],
-	) (*mongo.Cursor, error) {
+func NewOnFindMock(fakeData ...any) func(ctx context.Context, collection string, filter any, opts ...options.Lister[options.FindOptions]) (*mongo.Cursor, error) {
+	return func(ctx context.Context, collection string, filter any, opts ...options.Lister[options.FindOptions]) (*mongo.Cursor, error) {
 		cursor, err := mongo.NewCursorFromDocuments(fakeData, nil, nil)
 		return cursor, err
 	}
 }
 
 // NewOnFindOneMock returns an OnFindOne function that returns a SingleResult with the given fake data.
-func NewOnFindOneMock(fakeData any) func(
-	ctx context.Context, collection string, filter any,
-	opts ...options.Lister[options.FindOneOptions],
-) *mongo.SingleResult {
-	return func(_ context.Context, _ string, _ any, _ ...options.Lister[options.FindOneOptions]) *mongo.SingleResult {
+func NewOnFindOneMock(fakeData any) func(ctx context.Context, collection string, filter any, opts ...options.Lister[options.FindOneOptions]) *mongo.SingleResult {
+	return func(ctx context.Context, collection string, filter any, opts ...options.Lister[options.FindOneOptions]) *mongo.SingleResult {
 		return mongo.NewSingleResultFromDocument(fakeData, nil, nil)
 	}
 }
 
 // NewErrOnFind returns an OnFind function that always returns the specified error.
-func NewErrOnFind(err error) func(
-	ctx context.Context, collection string, filter any,
-	opts ...options.Lister[options.FindOptions],
-) (*mongo.Cursor, error) {
-	return func(
-		_ context.Context, _ string, _ any,
-		_ ...options.Lister[options.FindOptions],
-	) (*mongo.Cursor, error) {
+func NewErrOnFind(err error) func(ctx context.Context, collection string, filter any, opts ...options.Lister[options.FindOptions]) (*mongo.Cursor, error) {
+	return func(ctx context.Context, collection string, filter any, opts ...options.Lister[options.FindOptions]) (*mongo.Cursor, error) {
 		return nil, err
 	}
 }
 
 // NewErrOnFindOne returns an OnFindOne function that returns a SingleResult containing the specified error.
-func NewErrOnFindOne(err error) func(
-	ctx context.Context, collection string, filter any,
-	opts ...options.Lister[options.FindOneOptions],
-) *mongo.SingleResult {
-	return func(
-		_ context.Context, _ string, _ any,
-		_ ...options.Lister[options.FindOneOptions],
-	) *mongo.SingleResult {
+func NewErrOnFindOne(err error) func(ctx context.Context, collection string, filter any, opts ...options.Lister[options.FindOneOptions]) *mongo.SingleResult {
+	return func(ctx context.Context, collection string, filter any, opts ...options.Lister[options.FindOneOptions]) *mongo.SingleResult {
 		// Pass an empty non-nil document to prevent the decoder from returning
 		// its own "document is nil" error, ensuring it returns the error we injected.
 		return mongo.NewSingleResultFromDocument(bson.D{}, err, nil)
@@ -251,13 +197,13 @@ func NewErrOnFindOne(err error) func(
 // NewOnSaveMock returns an OnSave function that simulates a successful save.
 // It assigns a new ObjectID to the document and returns it.
 func NewOnSaveMock() func(ctx context.Context, doc DocInter) (DocInter, error) {
-	return func(_ context.Context, doc DocInter) (DocInter, error) {
+	return func(ctx context.Context, doc DocInter) (DocInter, error) {
 		// 1. Restore the nil check for robustness.
 		if v := reflect.ValueOf(doc); v.Kind() == reflect.Ptr && v.IsNil() {
 			return nil, fmt.Errorf("%w: %w", ErrInvalidDocument, errors.New("document cannot be nil"))
 		}
 		if err := doc.Validate(); err != nil {
-			return nil, fmt.Errorf("%w: %w", ErrInvalidDocument, err)
+			return nil, fmt.Errorf("%w: %v", ErrInvalidDocument, err)
 		}
 		doc.SetId(bson.NewObjectID())
 		return doc, nil
@@ -265,10 +211,8 @@ func NewOnSaveMock() func(ctx context.Context, doc DocInter) (DocInter, error) {
 }
 
 // NewOnPipeFindMock returns an OnPipeFind function that returns a cursor with the given fake data.
-func NewOnPipeFindMock(fakeData ...any) func(
-	ctx context.Context, collection string, pipeline mongo.Pipeline,
-) (*mongo.Cursor, error) {
-	return func(_ context.Context, _ string, _ mongo.Pipeline) (*mongo.Cursor, error) {
+func NewOnPipeFindMock(fakeData ...any) func(ctx context.Context, collection string, pipeline mongo.Pipeline) (*mongo.Cursor, error) {
+	return func(ctx context.Context, collection string, pipeline mongo.Pipeline) (*mongo.Cursor, error) {
 		cursor, err := mongo.NewCursorFromDocuments(fakeData, nil, nil)
 		return cursor, err
 	}
@@ -278,16 +222,16 @@ func NewOnPipeFindMock(fakeData ...any) func(
 // The mock BulkOperator's chainable methods are pre-configured to return itself,
 // and its Execute method is set to return the provided result and error.
 func NewOnBulkOperationMock(result *mongo.BulkWriteResult, err error) func(cname string) BulkOperator {
-	return func(_ string) BulkOperator {
+	return func(cname string) BulkOperator {
 		// Create a mock operator
 		mockOp := &MockBulkOperator{}
 
 		// Make chainable methods return the mock operator itself
-		mockOp.OnInsertOne = func(_ DocInter) BulkOperator { return mockOp }
-		mockOp.OnUpdateOne = func(_, _ any) BulkOperator { return mockOp }
+		mockOp.OnInsertOne = func(doc DocInter) BulkOperator { return mockOp }
+		mockOp.OnUpdateOne = func(filter any, update any) BulkOperator { return mockOp }
 
 		// Set the final return value for the Execute method
-		mockOp.OnExecute = func(_ context.Context) (*mongo.BulkWriteResult, error) {
+		mockOp.OnExecute = func(ctx context.Context) (*mongo.BulkWriteResult, error) {
 			return result, err
 		}
 		return mockOp

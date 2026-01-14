@@ -15,6 +15,9 @@ import (
 // It allows for mocking the entire package for testing purposes.
 type Datastore interface {
 	Save(ctx context.Context, doc DocInter) (DocInter, error)
+	CountDocument(
+		ctx context.Context, collectionName string, filter any,
+	) (int64, error)
 	Find(
 		ctx context.Context, collection string, filter any,
 		opts ...options.Lister[options.FindOptions],

@@ -101,7 +101,6 @@ func (rg *routerGroup) register(r gin.IRouter) {
 	for name, group := range rg.group {
 		ginRouterGroup := r.Group(name)
 		registerRouter(ginRouterGroup, *group)
-
 	}
 }
 

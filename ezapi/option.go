@@ -14,9 +14,9 @@ func WithRouterGroup(routerGroup RouterGroup) option {
 	}
 }
 
-func WithPort(port int) option {
+func WithPort(port uint16) option {
 	return func(c *config) {
-		c.Port = uint16(port)
+		c.Port = port
 	}
 }
 
@@ -44,7 +44,8 @@ func WithSession(enable bool, store string, cookieName string, maxAge int, keyPa
 
 func WithMiddleware(middleware ...gin.HandlerFunc) option {
 	return func(c *config) {
-		c.Middlewares = append(defaultMiddelware, middleware...)
+		c.Middlewares = defaultMiddelware
+		c.Middlewares = append(c.Middlewares, middleware...)
 	}
 }
 

@@ -12,7 +12,7 @@ import (
 
 type MgoAggregate interface {
 	GetPipeline(q bson.M) mongo.Pipeline
-	Index
+	C() string
 }
 
 func PipeFind[T MgoAggregate](ctx context.Context, aggr T, filter bson.M) ([]T, error) {

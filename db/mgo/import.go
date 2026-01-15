@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"io"
 
-	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/v2/bson"
 )
 
 func Import(
@@ -32,6 +32,7 @@ func (m *mongoStore) Import(
 	if len(rawData) == 0 {
 		return nil
 	}
+
 	_, err = collection.InsertMany(ctx, rawData)
 	return err
 }

@@ -2,7 +2,7 @@ package mgo
 
 import (
 	"context"
-	"encoding/json"
+	"fmt"
 	"io"
 
 	"go.mongodb.org/mongo-driver/bson"
@@ -20,26 +20,18 @@ func Import(
 func (m *mongoStore) Import(
 	ctx context.Context, collectionName string, reader io.Reader,
 ) error {
+	collection := m.getCollection(collectionName)
 	data, err := io.ReadAll(reader)
 	if err != nil {
 		return err
 	}
-	collection := m.getCollection(collectionName)
-	var rawDocs []json.RawMessage
-	if err := json.Unmarshal(data, &rawDocs); err != nil {
-		return err
+	var rawData []bson.M
+	if err := bson.UnmarshalExtJSON(data, false, &rawData); err != nil {
+		return fmt.Errorf("BSON UnmarshalExtJSON failed: %w", err)
 	}
-
-	// 3. 轉換為 BSON Documents
-	var docs []any
-	for _, raw := range rawDocs {
-		var doc bson.M
-		// 使用 true 開啟 Canonical/Relaxed 模式支援 $date, $oid
-		if err := bson.UnmarshalExtJSON(raw, true, &doc); err != nil {
-			return err
-		}
-		docs = append(docs, doc)
+	if len(rawData) == 0 {
+		return nil
 	}
-	_, err = collection.InsertMany(ctx, docs)
+	_, err = collection.InsertMany(ctx, rawData)
 	return err
 }

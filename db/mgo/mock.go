@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"io"
 	"reflect"
 
 	"go.mongodb.org/mongo-driver/v2/bson"
@@ -60,6 +61,7 @@ type MockDatastore struct {
 	OnStartTraceSpan func(
 		ctx context.Context, name string, attributes ...attribute.KeyValue,
 	) (context.Context, trace.Span)
+	OnImport func(ctx context.Context, collectionName string, reader io.Reader) error
 }
 
 // MockBulkOperator is a mock implementation of the BulkOperator interface.
@@ -167,6 +169,10 @@ func (m *MockDatastore) startTraceSpan(
 	ctx context.Context, name string, attributes ...attribute.KeyValue,
 ) (context.Context, trace.Span) {
 	return m.OnStartTraceSpan(ctx, name, attributes...)
+}
+
+func (m *MockDatastore) Import(ctx context.Context, collectionName string, reader io.Reader) error {
+	return m.OnImport(ctx, collectionName, reader)
 }
 
 // Interface implementations for MockBulkOperator

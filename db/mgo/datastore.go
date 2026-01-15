@@ -2,6 +2,7 @@ package mgo
 
 import (
 	"context"
+	"io"
 
 	"go.mongodb.org/mongo-driver/v2/bson"
 	"go.mongodb.org/mongo-driver/v2/mongo"
@@ -45,6 +46,10 @@ type Datastore interface {
 		ctx context.Context, collectionName string, field string, filter any,
 		opts ...options.Lister[options.DistinctOptions],
 	) ([]bson.RawValue, error)
+
+	Import(
+		ctx context.Context, collectionName string, reader io.Reader,
+	) error
 
 	NewBulkOperation(cname string) BulkOperator
 	getCollection(name string) *mongo.Collection

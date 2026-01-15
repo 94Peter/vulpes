@@ -1,6 +1,7 @@
 package mgo_test
 
 import (
+	"bytes"
 	"context"
 	"errors"
 	"testing"
@@ -21,8 +22,10 @@ type testUser struct {
 	Age  int
 }
 
+const testCollectionName = "users"
+
 // Implement the DocInter interface for testUser.
-func (*testUser) C() string                   { return "users" }
+func (*testUser) C() string                   { return testCollectionName }
 func (*testUser) Indexes() []mongo.IndexModel { return nil }
 func (*testUser) Validate() error             { return nil }
 func (u *testUser) GetId() any                { return u.ID }
@@ -544,5 +547,25 @@ func TestDeleteMany(t *testing.T) {
 		assert.Zero(t, deletedCount)
 		require.Error(t, err)
 		assert.ErrorIs(t, err, expectedErr)
+	})
+}
+
+func TestImport(t *testing.T) {
+	closeFunc, err := mgo.InitTestContainer(t.Context())
+	require.NoError(t, err)
+	defer closeFunc()
+	t.Run("Success", func(t *testing.T) {
+		// Arrange
+		data := []byte(`[{"_id": {"$oid": "6900a5df0b590aa2f77ba50b"},"name": "Peter", "age": 30}, 
+		{"_id": {"$oid": "6900a5df0b590aa2f77ba50c"},"name": "Alice", "age": 25}]`)
+		reader := bytes.NewReader(data)
+
+		err := mgo.Import(t.Context(), testCollectionName, reader)
+
+		require.NoError(t, err)
+
+		count, err := mgo.CountDocument(t.Context(), testCollectionName, bson.M{})
+		require.NoError(t, err)
+		assert.Equal(t, int64(2), count)
 	})
 }

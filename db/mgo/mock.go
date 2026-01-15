@@ -168,6 +168,9 @@ func (*MockDatastore) getClient() *mongo.Client {
 func (m *MockDatastore) startTraceSpan(
 	ctx context.Context, name string, attributes ...attribute.KeyValue,
 ) (context.Context, trace.Span) {
+	if m.OnStartTraceSpan == nil {
+		return ctx, trace.SpanFromContext(ctx)
+	}
 	return m.OnStartTraceSpan(ctx, name, attributes...)
 }
 

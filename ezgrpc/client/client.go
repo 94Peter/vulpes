@@ -32,14 +32,14 @@ type client struct {
 
 type serviceInfo struct {
 	conn    *grpc.ClientConn
-	Name    string
 	Methods map[string]*methodInfo
+	Name    string
 }
 
 type methodInfo struct {
-	Name       string
 	InputType  protoreflect.MessageDescriptor
 	OutputType protoreflect.MessageDescriptor
+	Name       string
 	IsStream   bool
 }
 

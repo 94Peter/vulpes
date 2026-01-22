@@ -13,9 +13,9 @@ import (
 
 // testUser is a simple struct used for testing purposes.
 type testUser struct {
-	ID   bson.ObjectID `bson:"_id,omitempty"`
 	Name string
 	Age  int
+	ID   bson.ObjectID `bson:"_id,omitempty"`
 }
 
 // Implement the DocInter interface for testUser.

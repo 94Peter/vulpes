@@ -34,9 +34,9 @@ func NewMongoStore(maxAge int, keyPairs ...[]byte) Store {
 }
 
 type mongoStore struct {
-	Codecs []securecookie.Codec
-	Opts   *sessions.Options
 	Token  TokenGetSeter
+	Opts   *sessions.Options
+	Codecs []securecookie.Codec
 }
 
 func (m *mongoStore) MaxAge(age int) {

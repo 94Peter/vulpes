@@ -14,8 +14,8 @@ import (
 // bulk write operations, leveraging MongoDB's BulkWrite capabilities.
 // It allows combining multiple insert, update, and delete operations into a single request.
 type bulkOperation struct {
-	operations []mongo.WriteModel
 	collection *mongo.Collection
+	operations []mongo.WriteModel
 }
 
 // NewBulkOperation creates a new builder for a bulk operation on a specific collection.

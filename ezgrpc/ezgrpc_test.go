@@ -14,8 +14,8 @@ import (
 
 // mockClient is a mock implementation of the client.Client interface for testing.
 type mockClient struct {
-	resp []byte
 	err  error
+	resp []byte
 }
 
 // Invoke simulates the behavior of the real client's Invoke method.

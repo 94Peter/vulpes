@@ -39,10 +39,10 @@ func NewSession(opts ...SessionOption) *session {
 }
 
 type session struct {
-	mgo.Index `bson:"-"`
-	Id        bson.ObjectID `bson:"_id,omitempty"`
-	Data      string
 	Modified  time.Time
+	mgo.Index `bson:"-"`
+	Data      string
+	Id        bson.ObjectID `bson:"_id,omitempty"`
 }
 
 func (*session) Validate() error {

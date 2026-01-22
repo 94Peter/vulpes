@@ -17,9 +17,9 @@ import (
 
 // testUser is a simple struct used for testing purposes.
 type testUser struct {
-	ID   bson.ObjectID `bson:"_id,omitempty"`
 	Name string
 	Age  int
+	ID   bson.ObjectID `bson:"_id,omitempty"`
 }
 
 const testCollectionName = "users"
@@ -342,8 +342,8 @@ func TestSave(t *testing.T) {
 // testAggregate is a simple struct used for testing PipeFind.
 type testAggregate struct {
 	CollectionName string
-	Pipeline       mongo.Pipeline
 	Name           string
+	Pipeline       mongo.Pipeline
 }
 
 // Implement the MgoAggregate interface for testAggregate.

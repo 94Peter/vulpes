@@ -22,11 +22,11 @@ var (
 
 // Config holds the configuration for the logger.
 type Config struct {
-	Development bool   // Development mode enables colored, human-readable output.
-	Level       string // Level sets the minimum log level (e.g., "debug", "info", "warn", "error").
-	CallerSkip  int    // CallerSkip controls the number of stack frames to skip when logging.
-	ServiceName string // ServiceName is the name of the service logging.
-	Env         string // Env is the environment the service is running in.
+	Level       string
+	ServiceName string
+	Env         string
+	CallerSkip  int
+	Development bool
 }
 
 const defaultCallerSkip = 2

@@ -17,10 +17,10 @@ import (
 // NOTE: In a production environment with many clients, this map can grow indefinitely.
 // Consider using a library with automatic cleanup of old entries (e.g., based on LRU).
 type ipRateLimiter struct {
-	mu       sync.Mutex
 	limiters map[string]*rate.Limiter
 	rate     rate.Limit
 	burst    int
+	mu       sync.Mutex
 }
 
 // newIPRateLimiter creates a new rate limiter for IP addresses.

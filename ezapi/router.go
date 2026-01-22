@@ -30,9 +30,9 @@ func NewRouterGroup() RouterGroup {
 
 // router represents a single API route with its HTTP method, path, and handler.
 type router struct {
+	handler gin.HandlerFunc
 	method  string
 	path    string
-	handler gin.HandlerFunc
 }
 
 type routerList []router
@@ -80,8 +80,8 @@ func (rl *routerList) DELETE(path string, handler gin.HandlerFunc) {
 
 // routerGroup holds a collection of routes that will be registered with the gin engine.
 type routerGroup struct {
-	routerList
 	group map[string]*routerList
+	routerList
 }
 
 func (rg *routerGroup) Group(name string) Router {

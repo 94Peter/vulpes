@@ -29,26 +29,24 @@ const (
 )
 
 type config struct {
-	Port    uint16
-	Session struct {
-		Enable     bool
-		Store      string
-		CookieName string
-		MaxAge     int
-		KeyPairs   [][]byte
-	}
-	CSRF struct {
-		Enable       bool
+	Routers     RouterGroup
+	StaticFS    map[string]http.FileSystem
+	Middlewares []gin.HandlerFunc
+	CSRF        struct {
 		Secret       string
 		FieldName    string
 		ExcludePaths []string
+		Enable       bool
 	}
-	StaticFS    map[string]http.FileSystem
-	Middlewares []gin.HandlerFunc
-	Tracer      struct {
-		Enable bool
+	Session struct {
+		Store      string
+		CookieName string
+		KeyPairs   [][]byte
+		MaxAge     int
+		Enable     bool
 	}
-	Routers RouterGroup
+	Port   uint16
+	Tracer struct{ Enable bool }
 }
 
 func (cfg *config) initSession() error {
@@ -137,17 +135,17 @@ var (
 	defaultConfig = config{
 		Port: defaultPort,
 		Session: struct {
-			Enable     bool
 			Store      string
 			CookieName string
-			MaxAge     int
 			KeyPairs   [][]byte
+			MaxAge     int
+			Enable     bool
 		}{},
 		CSRF: struct {
-			Enable       bool
 			Secret       string
 			FieldName    string
 			ExcludePaths []string
+			Enable       bool
 		}{},
 		Middlewares: defaultMiddelware,
 		StaticFS:    make(map[string]http.FileSystem),

@@ -15,12 +15,12 @@ import (
 )
 
 type r2Config struct {
+	tracer            trace.Tracer
 	r2EndpointURL     string
 	r2AccessKeyID     string
 	r2SecretAccessKey string
 	r2Region          string
 	r2BucketName      string
-	tracer            trace.Tracer
 }
 
 var defaultR2Config = r2Config{
@@ -78,9 +78,9 @@ func newR2Storage(ctx context.Context, opts ...Option) (*r2Storage, error) {
 }
 
 type r2Storage struct {
+	tracer trace.Tracer
 	client *s3.Client
 	bucket string
-	tracer trace.Tracer
 }
 
 func (r *r2Storage) Upload(ctx context.Context, key string, body io.Reader, contentType string) error {

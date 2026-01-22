@@ -9,6 +9,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/gin-contrib/pprof"
 	"github.com/gin-contrib/sessions"
 	"github.com/gin-gonic/gin"
 	csrf "github.com/utrack/gin-csrf"
@@ -178,6 +179,7 @@ func initEngin(cfg *config) {
 		for k, fs := range cfg.StaticFS {
 			engine.StaticFS(k, fs)
 		}
+		pprof.Register(engine)
 		engine.Use(cfg.Middlewares...)
 		// 評估留一種方法即可
 		routers.register(engine)

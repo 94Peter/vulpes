@@ -19,7 +19,7 @@ func PipeFindByPipeline[T any](
 	ctx context.Context,
 	collectionName string,
 	pipeline mongo.Pipeline,
-	filter bson.M) ([]T, error) {
+) ([]T, error) {
 	if dataStore == nil {
 		return nil, ErrNotConnected
 	}
@@ -44,29 +44,7 @@ func PipeFindByPipeline[T any](
 }
 
 func PipeFind[T MgoAggregate](ctx context.Context, aggr T, filter bson.M) ([]T, error) {
-	if dataStore == nil {
-		return nil, ErrNotConnected
-	}
-	pipeline := aggr.GetPipeline(filter)
-	data, _ := json.Marshal(pipeline)
-	collectionName := aggr.C()
-	_, span := dataStore.startTraceSpan(ctx,
-		"mongo.pipeFind."+collectionName,
-		attribute.String("db.collection", collectionName),
-		attribute.String("db.operation", "pipeFind"),
-		attribute.String("db.statement", string(data)),
-	)
-	defer span.End()
-	sortCursor, err := dataStore.PipeFind(ctx, collectionName, pipeline)
-	if err != nil {
-		return nil, spanErrorHandler(fmt.Errorf("%w: %w", ErrReadFailed, err), span)
-	}
-	var slice []T
-	err = sortCursor.All(ctx, &slice)
-	if err != nil {
-		return nil, spanErrorHandler(fmt.Errorf("%w: %w", ErrReadFailed, err), span)
-	}
-	return slice, spanErrorHandler(nil, span)
+	return PipeFindByPipeline[T](ctx, aggr.C(), aggr.GetPipeline(filter))
 }
 
 func PipeFindOne[T MgoAggregate](ctx context.Context, aggr T, filter bson.M) error {

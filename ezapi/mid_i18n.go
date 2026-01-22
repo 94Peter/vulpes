@@ -16,14 +16,11 @@ func I18n(defaultLanguage string, isLocalExist func(lang string) bool) gin.Handl
 			lang = c.GetString("line.liff.locale")
 		case c.Param("lang") != "":
 			lang = c.Param("lang")
-		default:
-			lang = defaultLanguage
 		}
 
 		if lang != "" {
 			if !isLocalExist(lang) {
-				c.Next()
-				return
+				lang = defaultLanguage
 			}
 			ctx, err := ctxi18n.WithLocale(c.Request.Context(), strings.ToLower(lang))
 			if err != nil {

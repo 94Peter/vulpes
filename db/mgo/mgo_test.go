@@ -551,7 +551,7 @@ func TestDeleteMany(t *testing.T) {
 }
 
 func TestImport(t *testing.T) {
-	closeFunc, err := mgo.InitTestContainer(t.Context())
+	_, closeFunc, err := mgo.InitTestContainer(t.Context())
 	require.NoError(t, err)
 	defer closeFunc()
 	t.Run("Success", func(t *testing.T) {

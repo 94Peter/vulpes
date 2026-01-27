@@ -10,7 +10,6 @@ import (
 	"go.mongodb.org/mongo-driver/v2/bson"
 	"go.mongodb.org/mongo-driver/v2/mongo"
 	"go.mongodb.org/mongo-driver/v2/mongo/options"
-	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
 )
 
@@ -59,7 +58,7 @@ type MockDatastore struct {
 		ctx context.Context, collectionName string, field string, filter any, opts ...options.Lister[options.DistinctOptions],
 	) ([]bson.RawValue, error)
 	OnStartTraceSpan func(
-		ctx context.Context, name string, attributes ...attribute.KeyValue,
+		ctx context.Context, collectionName string, operation string, statement any,
 	) (context.Context, trace.Span)
 	OnImport func(ctx context.Context, collectionName string, reader io.Reader) error
 }
@@ -166,12 +165,12 @@ func (*MockDatastore) getClient() *mongo.Client {
 }
 
 func (m *MockDatastore) startTraceSpan(
-	ctx context.Context, name string, attributes ...attribute.KeyValue,
+	ctx context.Context, collectionName string, operation string, statement any,
 ) (context.Context, trace.Span) {
 	if m.OnStartTraceSpan == nil {
 		return ctx, trace.SpanFromContext(ctx)
 	}
-	return m.OnStartTraceSpan(ctx, name, attributes...)
+	return m.OnStartTraceSpan(ctx, collectionName, operation, statement)
 }
 
 func (m *MockDatastore) Import(ctx context.Context, collectionName string, reader io.Reader) error {

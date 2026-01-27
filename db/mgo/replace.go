@@ -19,12 +19,7 @@ func ReplaceOne[T DocInter](
 	}
 	data, _ := json.Marshal(filter)
 	collectionName := doc.C()
-	_, span := dataStore.startTraceSpan(ctx,
-		fmt.Sprintf("mongo.replaceOne.%s", collectionName),
-		attribute.String("db.collection", collectionName),
-		attribute.String("db.operation", "save"),
-		attribute.String("db.statement", string(data)),
-	)
+	_, span := dataStore.startTraceSpan(ctx, collectionName, "save", data)
 	defer span.End()
 	result, err := dataStore.ReplaceOne(ctx, doc.C(), filter, doc, opts...)
 	if err != nil {

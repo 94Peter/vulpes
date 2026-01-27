@@ -29,7 +29,7 @@ require (
 	github.com/testcontainers/testcontainers-go/modules/mongodb v0.40.0
 	github.com/utrack/gin-csrf v0.0.0-20190424104817-40fb8d2c8fca
 	github.com/vmihailenco/msgpack/v5 v5.4.1
-	github.com/weaviate/weaviate v1.31.5
+	github.com/weaviate/weaviate v1.31.19
 	github.com/weaviate/weaviate-go-client/v5 v5.4.1
 	go.mongodb.org/mongo-driver/v2 v2.3.0
 	go.opentelemetry.io/contrib/instrumentation/github.com/gin-gonic/gin/otelgin v0.64.0

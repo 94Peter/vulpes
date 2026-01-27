@@ -92,9 +92,14 @@ func InitConnection(ctx context.Context, dbName string, tracer trace.Tracer, opt
 			tracer = noop.NewTracerProvider().Tracer("mongo")
 		}
 
+		_, span := tracer.Start(context.Background(), "check")
+		isNoop := !span.IsRecording() // 如果連測試 Span 都不錄製，就是 No-op
+		span.End()
+
 		dataStore = &mongoStore{
 			db:     client.Database(dbName),
 			tracer: tracer,
+			isNoop: isNoop,
 		}
 		isConnected = true
 	})
@@ -131,44 +136,31 @@ func IsHealth(ctx context.Context) error {
 	return nil
 }
 
-func InitTestContainer(ctx context.Context) (drapAllDb func(), closeContainer func(), returnErr error) {
-	mongodbContainer, err := mongodb.Run(ctx, "mongo:6.0")
+func InitTestContainer(ctx context.Context) (drop func(), close func(), err error) {
+	mongoC, err := mongodb.Run(ctx, "mongo:6.0")
 	if err != nil {
-		returnErr = err
-		return
+		return nil, nil, err
 	}
-	endpoint, err := mongodbContainer.ConnectionString(ctx)
+
+	terminate := func() { _ = mongoC.Terminate(context.Background()) }
+	uri, err := mongoC.ConnectionString(ctx)
+	if err == nil {
+		err = InitConnection(ctx, "test", noop.NewTracerProvider().Tracer("mongo"), WithURI(uri))
+	}
 	if err != nil {
-		returnErr = err
-		return
+		return nil, terminate, err
 	}
-	err = InitConnection(ctx, "test", noop.NewTracerProvider().Tracer("mongo"), WithURI(endpoint))
-	if err != nil {
-		returnErr = err
-		return
-	}
-	drapAllDb = func() {
-		const script = `db.getMongo().getDBNames().forEach(function(d){
-    if(["admin","config","local"].indexOf(d) === -1) {
-        db.getSiblingDB(d).dropDatabase();
-    }
-})`
-		exitCode, reader, err := mongodbContainer.Exec(ctx, []string{"mongosh", "--eval", script})
-		if err != nil {
-			returnErr = fmt.Errorf("呼叫 Exec 失敗: %v", err)
-		}
-		content, _ := io.ReadAll(reader)
-		if exitCode != 0 {
-			// 如果失敗，印出內容來看看錯誤原因是什麼
-			returnErr = fmt.Errorf("指令執行失敗，ExitCode: %d, 錯誤內容: %s", exitCode, string(content))
+
+	drop = func() {
+		sh := `db.getMongo().getDBNames().forEach(d => {
+			if(!["admin","config","local"].includes(d)) db.getSiblingDB(d).dropDatabase()
+		})`
+		code, r, _ := mongoC.Exec(ctx, []string{"mongosh", "--quiet", "--eval", sh})
+		if code != 0 {
+			out, _ := io.ReadAll(r)
+			fmt.Printf("Drop failed (%d): %s\n", code, out)
 		}
 	}
 
-	// 回傳一個簡單的 cleanup function
-	closeContainer = func() {
-		if err := mongodbContainer.Terminate(context.Background()); err != nil {
-			fmt.Printf("failed to terminate container: %s\n", err)
-		}
-	}
-	return
+	return drop, terminate, nil
 }

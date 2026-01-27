@@ -4,6 +4,8 @@ import (
 	"bytes"
 	"context"
 	"errors"
+	"fmt"
+	"os"
 	"testing"
 
 	"github.com/94peter/vulpes/db/mgo"
@@ -46,7 +48,7 @@ func TestFind(t *testing.T) {
 
 		// Act
 		var result []*testUser
-		result, err := mgo.Find(context.Background(), &testUser{}, nil)
+		result, err := mgo.Find(context.Background(), &testUser{}, nil, 20)
 
 		// Assert
 		require.NoError(t, err)
@@ -66,7 +68,7 @@ func TestFind(t *testing.T) {
 
 		// Act
 		var result []*testUser
-		result, err := mgo.Find(context.Background(), &testUser{}, nil)
+		result, err := mgo.Find(context.Background(), &testUser{}, nil, 20)
 
 		// Assert
 		assert.Nil(t, result)
@@ -372,7 +374,7 @@ func TestPipeFind(t *testing.T) {
 
 		// Act
 		var result []*testAggregate
-		result, err := mgo.PipeFind(context.Background(), aggr, nil) // filter is nil for PipeFind
+		result, err := mgo.PipeFind(context.Background(), aggr, nil, 20) // filter is nil for PipeFind
 
 		// Assert
 		require.NoError(t, err)
@@ -398,7 +400,7 @@ func TestPipeFind(t *testing.T) {
 
 		// Act
 		var result []*testAggregate
-		result, err := mgo.PipeFind(context.Background(), aggr, nil)
+		result, err := mgo.PipeFind(context.Background(), aggr, nil, 20)
 
 		// Assert
 		assert.Nil(t, result)
@@ -551,10 +553,8 @@ func TestDeleteMany(t *testing.T) {
 }
 
 func TestImport(t *testing.T) {
-	_, closeFunc, err := mgo.InitTestContainer(t.Context())
-	require.NoError(t, err)
-	defer closeFunc()
 	t.Run("Success", func(t *testing.T) {
+		defer cleanDb()
 		// Arrange
 		data := []byte(`[{"_id": {"$oid": "6900a5df0b590aa2f77ba50b"},"name": "Peter", "age": 30}, 
 		{"_id": {"$oid": "6900a5df0b590aa2f77ba50c"},"name": "Alice", "age": 25}]`)
@@ -568,4 +568,23 @@ func TestImport(t *testing.T) {
 		require.NoError(t, err)
 		assert.Equal(t, int64(2), count)
 	})
+}
+
+var cleanDb func()
+
+func TestMain(m *testing.M) {
+	// 檢查是否有傳入 bench 參數
+	// 只有在需要跑測試時才啟動容器 (可選)
+	ctx := context.Background()
+	clean, closeFunc, err := mgo.InitTestContainer(ctx)
+	if err != nil {
+		fmt.Println("Setup failed")
+		os.Exit(1)
+	}
+	cleanDb = clean
+
+	code := m.Run() // 這裡會根據你的 -bench=xxx 自動篩選
+
+	closeFunc()
+	os.Exit(code)
 }

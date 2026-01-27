@@ -32,12 +32,7 @@ func UpdateOne[T DocInter](ctx context.Context, doc T, filter bson.D, update bso
 		return 0, ErrNotConnected
 	}
 	collectionName := doc.C()
-	_, span := dataStore.startTraceSpan(ctx,
-		fmt.Sprintf("mongo.updateOne.%s", collectionName),
-		attribute.String("db.collection", collectionName),
-		attribute.String("db.operation", "updateOne"),
-		attribute.Stringer("db.statement", filter),
-	)
+	_, span := dataStore.startTraceSpan(ctx, collectionName, "updateOne", filter)
 	defer span.End()
 	affected, err := dataStore.UpdateOne(ctx, doc.C(), filter, update)
 	if err != nil {

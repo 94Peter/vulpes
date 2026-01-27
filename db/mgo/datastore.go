@@ -2,6 +2,7 @@ package mgo
 
 import (
 	"context"
+	"encoding/json"
 	"io"
 
 	"go.mongodb.org/mongo-driver/v2/bson"
@@ -39,7 +40,9 @@ type Datastore interface {
 		opts ...options.Lister[options.ReplaceOptions],
 	) (*mongo.UpdateResult, error)
 
-	PipeFind(ctx context.Context, collection string, pipeline mongo.Pipeline) (*mongo.Cursor, error)
+	PipeFind(
+		ctx context.Context, collection string, pipeline mongo.Pipeline,
+	) (*mongo.Cursor, error)
 	PipeFindOne(ctx context.Context, collection string, pipeline mongo.Pipeline) *mongo.SingleResult
 
 	Distinct(
@@ -56,7 +59,12 @@ type Datastore interface {
 	getDatabase() *mongo.Database
 	close(ctx context.Context) error
 	getClient() *mongo.Client
-	startTraceSpan(ctx context.Context, name string, attributes ...attribute.KeyValue) (context.Context, trace.Span)
+	startTraceSpan(
+		ctx context.Context,
+		collectionName string,
+		operation string,
+		statement any,
+	) (context.Context, trace.Span)
 }
 
 // BulkOperator defines the interface for the fluent bulk operation builder.
@@ -75,6 +83,7 @@ var dataStore Datastore
 type mongoStore struct {
 	db     *mongo.Database
 	tracer trace.Tracer
+	isNoop bool
 }
 
 func (m *mongoStore) getCollection(name string) *mongo.Collection {
@@ -96,18 +105,31 @@ func (m *mongoStore) getClient() *mongo.Client {
 const dbSystem = "mongodb"
 
 func (m *mongoStore) startTraceSpan(
-	ctx context.Context, name string, attributes ...attribute.KeyValue,
+	ctx context.Context, collectionName string, operation string, statement any,
 ) (context.Context, trace.Span) {
+	if m.isNoop {
+		// 直接返回一個 no-op 的 Span，或者根據你的需求返回 ctx, nil
+		// 注意：如果返回 nil，後續呼叫 span.End() 時要加檢查
+		return ctx, trace.SpanFromContext(ctx)
+	}
+	name := "mongo." + operation + "." + collectionName
 	ctx, span := m.tracer.Start(ctx, name, trace.WithSpanKind(trace.SpanKindClient))
 	span.SetAttributes(
-		append([]attribute.KeyValue{
-			attribute.String("db.system", dbSystem),
-		}, attributes...)...,
+		attribute.String("db.system", dbSystem),
+		attribute.String("db.collection", collectionName),
+		attribute.String("db.operation", operation),
 	)
+	if span.IsRecording() && statement != nil {
+		data, _ := json.Marshal(statement)
+		span.SetAttributes(attribute.String("db.statement", string(data)))
+	}
 	return ctx, span
 }
 
 func spanErrorHandler(err error, span trace.Span) error {
+	if span == nil {
+		return err
+	}
 	if err != nil {
 		span.SetStatus(codes.Error, err.Error())
 	} else {

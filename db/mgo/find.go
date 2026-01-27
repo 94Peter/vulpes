@@ -2,34 +2,34 @@ package mgo
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
 	"fmt"
 
 	"go.mongodb.org/mongo-driver/v2/bson"
 	"go.mongodb.org/mongo-driver/v2/mongo"
 	"go.mongodb.org/mongo-driver/v2/mongo/options"
-	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/codes"
 )
 
 func Find[T DocInter](
-	ctx context.Context, doc T, filter any,
+	ctx context.Context, doc T, filter any, limit uint16,
 	opts ...options.Lister[options.FindOptions],
 ) ([]T, error) {
 	if dataStore == nil {
 		return nil, ErrNotConnected
 	}
-	data, _ := json.Marshal(filter)
+	if limit == 0 {
+		limit = 100
+	}
 	collectionName := doc.C()
-	_, span := dataStore.startTraceSpan(ctx,
-		fmt.Sprintf("mongo.find.%s", collectionName),
-		attribute.String("db.collection", collectionName),
-		attribute.String("db.operation", "find"),
-		attribute.String("db.statement", string(data)),
-	)
+	_, span := dataStore.startTraceSpan(ctx, collectionName, "find", filter)
 	defer span.End()
-	result, err := dataStore.Find(ctx, doc.C(), filter, opts...)
+
+	finalArgs := make([]options.Lister[options.FindOptions], 0, len(opts)+1)
+	finalArgs = append(finalArgs, options.Find().SetLimit(int64(limit)))
+	finalArgs = append(finalArgs, opts...)
+
+	result, err := dataStore.Find(ctx, doc.C(), filter, finalArgs...)
 	if err != nil {
 		if errors.Is(err, mongo.ErrNoDocuments) {
 			span.SetStatus(codes.Ok, "ok")
@@ -37,8 +37,7 @@ func Find[T DocInter](
 		}
 		return nil, spanErrorHandler(fmt.Errorf("%w: %w", ErrReadFailed, err), span)
 	}
-	var ret []T
-	err = result.All(ctx, &ret)
+	ret, err := cursorToSlice[T](ctx, result, result.RemainingBatchLength())
 	if err != nil {
 		return nil, spanErrorHandler(fmt.Errorf("%w: %w", ErrReadFailed, err), span)
 	}
@@ -52,14 +51,8 @@ func FindOne[T DocInter](
 	if dataStore == nil {
 		return ErrNotConnected
 	}
-	data, _ := json.Marshal(filter)
 	collectionName := doc.C()
-	_, span := dataStore.startTraceSpan(ctx,
-		fmt.Sprintf("mongo.findOne.%s", collectionName),
-		attribute.String("db.collection", collectionName),
-		attribute.String("db.operation", "findOne"),
-		attribute.String("db.statement", string(data)),
-	)
+	_, span := dataStore.startTraceSpan(ctx, collectionName, "findOne", filter)
 	defer span.End()
 	err := dataStore.FindOne(ctx, doc.C(), filter, opts...).Decode(&doc)
 	if err != nil {
@@ -97,4 +90,25 @@ func (m *mongoStore) FindOne(
 ) *mongo.SingleResult {
 	collection := m.getCollection(collectionName)
 	return collection.FindOne(ctx, filter, opts...)
+}
+
+func cursorToSlice[T any](ctx context.Context, cursor *mongo.Cursor, cap int) ([]T, error) {
+	ret := make([]T, 0, cap)
+	for cursor.Next(ctx) {
+		var t T
+		// 如果 T 是指標類型 (例如 *ComplexStruct)，需要初始化
+		// 這裡利用 any(t) 進行 UnmarshalBSON 斷言，實現高效解碼
+		if unmarshaler, ok := any(&t).(bson.Unmarshaler); ok {
+			if err := unmarshaler.UnmarshalBSON(cursor.Current); err != nil {
+				return nil, err
+			}
+		} else {
+			// 備援方案：若沒實作 UnmarshalBSON 則走預設解碼
+			if err := cursor.Decode(&t); err != nil {
+				return nil, err
+			}
+		}
+		ret = append(ret, t)
+	}
+	return ret, nil
 }

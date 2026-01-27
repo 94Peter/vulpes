@@ -2,12 +2,10 @@ package mgo
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 
 	"go.mongodb.org/mongo-driver/v2/bson"
 	"go.mongodb.org/mongo-driver/v2/mongo"
-	"go.opentelemetry.io/otel/attribute"
 )
 
 type MgoAggregate interface {
@@ -19,32 +17,32 @@ func PipeFindByPipeline[T any](
 	ctx context.Context,
 	collectionName string,
 	pipeline mongo.Pipeline,
+	limit uint16,
 ) ([]T, error) {
 	if dataStore == nil {
 		return nil, ErrNotConnected
 	}
-	data, _ := json.Marshal(pipeline)
-	_, span := dataStore.startTraceSpan(ctx,
-		"mongo.pipeFindByPipeline."+collectionName,
-		attribute.String("db.collection", collectionName),
-		attribute.String("db.operation", "pipeFindByPipeline"),
-		attribute.String("db.statement", string(data)),
-	)
+	_, span := dataStore.startTraceSpan(ctx, collectionName, "pipeFindByPipeline", pipeline)
 	defer span.End()
+
 	sortCursor, err := dataStore.PipeFind(ctx, collectionName, pipeline)
 	if err != nil {
 		return nil, spanErrorHandler(fmt.Errorf("%w: %w", ErrReadFailed, err), span)
 	}
-	var slice []T
-	err = sortCursor.All(ctx, &slice)
+	if limit == 0 {
+		limit = 100
+	}
+	slice, err := cursorToSlice[T](ctx, sortCursor, int(limit))
 	if err != nil {
 		return nil, spanErrorHandler(fmt.Errorf("%w: %w", ErrReadFailed, err), span)
 	}
 	return slice, spanErrorHandler(nil, span)
 }
 
-func PipeFind[T MgoAggregate](ctx context.Context, aggr T, filter bson.M) ([]T, error) {
-	return PipeFindByPipeline[T](ctx, aggr.C(), aggr.GetPipeline(filter))
+func PipeFind[T MgoAggregate](
+	ctx context.Context, aggr T, filter bson.M, limit uint16,
+) ([]T, error) {
+	return PipeFindByPipeline[T](ctx, aggr.C(), aggr.GetPipeline(filter), limit)
 }
 
 func PipeFindOne[T MgoAggregate](ctx context.Context, aggr T, filter bson.M) error {
@@ -52,20 +50,18 @@ func PipeFindOne[T MgoAggregate](ctx context.Context, aggr T, filter bson.M) err
 		return ErrNotConnected
 	}
 	pipeline := aggr.GetPipeline(filter)
-	data, _ := json.Marshal(pipeline)
 	collectionName := aggr.C()
-	_, span := dataStore.startTraceSpan(ctx,
-		fmt.Sprintf("mongo.pipeFind.%s", collectionName),
-		attribute.String("db.collection", collectionName),
-		attribute.String("db.operation", "pipeFind"),
-		attribute.String("db.statement", string(data)),
-	)
+	_, span := dataStore.startTraceSpan(ctx, collectionName, "pipeFindOne", pipeline)
 	defer span.End()
-	err := dataStore.PipeFindOne(ctx, collectionName, pipeline).Decode(&aggr)
+	result := dataStore.PipeFindOne(ctx, collectionName, pipeline)
+	raw, err := result.Raw()
 	if err != nil {
-		return fmt.Errorf("%w: %w", ErrReadFailed, err)
+		return spanErrorHandler(fmt.Errorf("%w: %w", ErrReadFailed, err), span)
 	}
-	return nil
+	if unmarshaler, ok := any(&aggr).(bson.Unmarshaler); ok {
+		return spanErrorHandler(unmarshaler.UnmarshalBSON(raw), span)
+	}
+	return spanErrorHandler(result.Decode(&aggr), span)
 }
 
 func (m *mongoStore) PipeFind(ctx context.Context, collection string, pipeline mongo.Pipeline) (*mongo.Cursor, error) {

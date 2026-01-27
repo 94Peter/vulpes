@@ -2,23 +2,14 @@ package mgo
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
-
-	"go.opentelemetry.io/otel/attribute"
 )
 
 func CountDocument(ctx context.Context, collectionName string, filter any) (int64, error) {
 	if dataStore == nil {
 		return 0, ErrNotConnected
 	}
-	data, _ := json.Marshal(filter)
-	_, span := dataStore.startTraceSpan(ctx,
-		"mongo.countDocument."+collectionName,
-		attribute.String("db.collection", collectionName),
-		attribute.String("db.operation", "count_document"),
-		attribute.String("db.statement", string(data)),
-	)
+	_, span := dataStore.startTraceSpan(ctx, collectionName, "count_document", filter)
 	defer span.End()
 	result, err := dataStore.CountDocument(ctx, collectionName, filter)
 	if err != nil {

@@ -16,11 +16,7 @@ func Save[T DocInter](ctx context.Context, doc T) (T, error) {
 		return zero, ErrNotConnected
 	}
 	collectionName := doc.C()
-	_, span := dataStore.startTraceSpan(ctx,
-		fmt.Sprintf("mongo.save.%s", collectionName),
-		attribute.String("db.collection", collectionName),
-		attribute.String("db.operation", "save"),
-	)
+	_, span := dataStore.startTraceSpan(ctx, collectionName, "save", nil)
 	defer span.End()
 	newDoc, err := dataStore.Save(ctx, doc)
 	if err != nil {

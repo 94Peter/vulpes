@@ -6,7 +6,6 @@ import (
 
 	"go.mongodb.org/mongo-driver/v2/bson"
 	"go.mongodb.org/mongo-driver/v2/mongo/options"
-	"go.opentelemetry.io/otel/attribute"
 )
 
 func Distinct[T any](
@@ -16,12 +15,7 @@ func Distinct[T any](
 	if dataStore == nil {
 		return nil, ErrNotConnected
 	}
-	_, span := dataStore.startTraceSpan(ctx,
-		fmt.Sprintf("mongo.distinct.%s.%s", collectionName, field),
-		attribute.String("db.collection", collectionName),
-		attribute.String("db.field", field),
-		attribute.String("db.operation", "distinct"),
-	)
+	_, span := dataStore.startTraceSpan(ctx, collectionName, "distinct", filter)
 	defer span.End()
 	values, err := dataStore.Distinct(ctx, collectionName, field, filter, opts...)
 	if err != nil {

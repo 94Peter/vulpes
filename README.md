@@ -65,6 +65,7 @@ type User struct {
 	ID        bson.ObjectID `bson:"_id,omitempty"`
 	Name      string        `bson:"name" validate:"required"`
 	Email     string        `bson:"email" validate:"required,email"`
+	Password  string        `bson:"password" validate:"required"`
 }
 
 func (u *User) Validate() error {

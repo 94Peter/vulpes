@@ -17,7 +17,7 @@ jobs:
 
       # 1. 啟動 Dagger (這會自動處理 Dagger Engine 的啟動)
       - name: Run Dagger CI
-        uses: dagger/dagger-for-github@v7
+        uses: dagger/dagger-for-github@v8.2.0
         with:
           # 呼叫你在 dagger/main.go 定義的 Ci 函式
           verb: call

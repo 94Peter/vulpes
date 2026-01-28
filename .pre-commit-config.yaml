@@ -1,29 +1,10 @@
 repos:
--   repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v5.0.0
-    hooks:
-    -   id: trailing-whitespace   # 移除行尾空格
-    -   id: end-of-file-fixer    # 確保檔案結尾有換行
-    -   id: check-yaml           # 檢查 YAML 格式
-    -   id: check-added-large-files # 防止大檔案誤傳
-
--   repo: https://github.com/golangci/golangci-lint
-    rev: v1.64.5
-    hooks:
-    -   id: golangci-lint
-        args: [--timeout, 5m] # 設定超時避免大型專案 lint 過久
-
--   repo: https://github.com/dnephin/pre-commit-golang
-    rev: v0.5.1
-    hooks:
-    -   id: go-fmt        # 強制執行 go fmt
-    -   id: go-mod-tidy   # 確保 go.mod 同步
-
 -   repo: local
     hooks:
-    -   id: govulncheck
-        name: govulncheck
-        entry: govulncheck ./...
+    -   id: dagger-ci
+        name: Dagger CI Checks
+        # 呼叫你在 dagger/main.go 定義的專案檢查函式
+        entry: dagger call run-all-checks --source=.
         language: system
         pass_filenames: false
         always_run: true

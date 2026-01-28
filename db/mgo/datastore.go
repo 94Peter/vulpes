@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"io"
+	"strings"
 
 	"go.mongodb.org/mongo-driver/v2/bson"
 	"go.mongodb.org/mongo-driver/v2/mongo"
@@ -58,6 +59,7 @@ type Datastore interface {
 	getCollection(name string) *mongo.Collection
 	getDatabase() *mongo.Database
 	close(ctx context.Context) error
+	cleanDb(ctx context.Context) error
 	getClient() *mongo.Client
 	startTraceSpan(
 		ctx context.Context,
@@ -88,6 +90,25 @@ type mongoStore struct {
 
 func (m *mongoStore) getCollection(name string) *mongo.Collection {
 	return m.db.Collection(name)
+}
+
+func (m *mongoStore) cleanDb(ctx context.Context) error {
+	// 1. 取得所有 Collection 名稱
+	names, err := m.db.ListCollectionNames(ctx, bson.D{})
+	if err != nil {
+		return err
+	}
+	// 2. 逐一刪除
+	for _, name := range names {
+		// 排除系統內置的 collection
+		if strings.HasPrefix(name, "system.") {
+			continue
+		}
+		if err := m.db.Collection(name).Drop(ctx); err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 func (m *mongoStore) close(ctx context.Context) error {

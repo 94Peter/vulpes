@@ -7,6 +7,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"os"
 	"sync"
 	"time"
 
@@ -116,6 +117,13 @@ func Close(ctx context.Context) error {
 	return nil
 }
 
+func cleanDb(ctx context.Context) error {
+	if dataStore != nil {
+		return dataStore.cleanDb(ctx)
+	}
+	return nil
+}
+
 func IsConnected() bool {
 	return isConnected
 }
@@ -139,6 +147,15 @@ func IsHealth(ctx context.Context) error {
 }
 
 func InitTestContainer(ctx context.Context) (drop func(), close func(), err error) {
+	testMongoURI := os.Getenv("TEST_MONGO_URI")
+	if testMongoURI != "" {
+		err = InitConnection(ctx, "test", noop.NewTracerProvider().Tracer("mongo"), WithURI(testMongoURI))
+		return func() {
+				_ = cleanDb(ctx)
+			}, func() {
+				_ = Close(ctx)
+			}, err
+	}
 	mongoC, err := mongodb.Run(ctx, "mongo:6.0")
 	if err != nil {
 		return nil, nil, err

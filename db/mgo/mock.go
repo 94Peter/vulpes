@@ -54,6 +54,7 @@ type MockDatastore struct {
 	OnGetCollection    func(name string) *mongo.Collection
 	OnGetDatabase      func() *mongo.Database
 	OnClose            func(ctx context.Context) error
+	OnCleanDb          func(ctx context.Context) error
 	OnDistinct         func(
 		ctx context.Context, collectionName string, field string, filter any, opts ...options.Lister[options.DistinctOptions],
 	) ([]bson.RawValue, error)
@@ -154,6 +155,10 @@ func (m *MockDatastore) getCollection(name string) *mongo.Collection {
 
 func (m *MockDatastore) close(ctx context.Context) error {
 	return m.OnClose(ctx)
+}
+
+func (m *MockDatastore) cleanDb(ctx context.Context) error {
+	return m.OnCleanDb(ctx)
 }
 
 func (m *MockDatastore) getDatabase() *mongo.Database {

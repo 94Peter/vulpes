@@ -1,0 +1,54 @@
+name: Dagger-CI
+
+on:
+  push:
+    branches: [ main ]
+
+permissions:
+  contents: write
+  issues: write
+
+jobs:
+  dagger-ci:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      # 1. 啟動 Dagger (這會自動處理 Dagger Engine 的啟動)
+      - name: Run Dagger CI
+        uses: dagger/dagger-for-github@v7
+        with:
+          # 呼叫你在 dagger/main.go 定義的 Ci 函式
+          verb: call
+          args: ci --source=.
+        env:
+          # 如果你的 Dagger 需要存取 GitHub Secrets 可以在此傳入
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  # 2. 獨立一個 Job 來處理失敗時的 Issue 建立
+  create-issue-on-failure:
+    needs: dagger-ci
+    runs-on: ubuntu-latest
+    # 僅在 Dagger CI 失敗，且不是在特定 fork 專案時執行
+    if: failure() && github.repository_owner != 'arwoosa'
+    steps:
+      - name: Create Issue
+        uses: dacbd/create-issue-action@main
+        with:
+          token: ${{ github.token }}
+          title: |
+            [${{ github.workflow }}] ❌ CI Failure on ${{ github.ref_name }}
+          assignees: ${{ github.actor }}
+          labels: CICD, bug
+          body: |
+            ## 🚨 CI Failure Report
+            
+            Dagger pipeline 執行失敗，請檢查日誌。
+
+            - **Run Details**: https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}
+            - **Commit**: ${{ github.sha }}
+            - **Author**: @${{ github.triggering_actor }}
+
+            ---
+            > 此 Issue 由 GitHub Action 自動建立，請在修正後關閉。

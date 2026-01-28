@@ -60,3 +60,15 @@ func WithTracerEnable(enable bool) option {
 		c.Tracer.Enable = enable
 	}
 }
+
+func WithLoggerEnable(enable bool) option {
+	return func(c *config) {
+		c.Logger.Enable = enable
+	}
+}
+
+func WithMode(mode string) option {
+	return func(c *config) {
+		c.Mode = mode
+	}
+}

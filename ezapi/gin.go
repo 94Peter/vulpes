@@ -32,6 +32,7 @@ const (
 type config struct {
 	Routers     RouterGroup
 	StaticFS    map[string]http.FileSystem
+	Mode        string
 	Middlewares []gin.HandlerFunc
 	CSRF        struct {
 		Secret       string
@@ -48,6 +49,13 @@ type config struct {
 	}
 	Port   uint16
 	Tracer struct{ Enable bool }
+	Logger struct{ Enable bool }
+}
+
+func (cfg *config) initLogger() {
+	if cfg.Logger.Enable {
+		cfg.appendMiddlewares(gin.Logger(), RequestLogger())
+	}
 }
 
 func (cfg *config) initSession() error {
@@ -129,7 +137,6 @@ var (
 	// defaultMiddelware is the set of default middleware used by the gin engine.
 	defaultMiddelware = []gin.HandlerFunc{
 		gin.Recovery(),
-		gin.Logger(),
 	}
 	myStore store.Store
 
@@ -175,6 +182,7 @@ func RegisterSessionInjector(injector SessionStoreInjector) {
 // It sets up the default middleware and registers all the routes that have been collected.
 func initEngin(cfg *config) {
 	once.Do(func() {
+		gin.SetMode(cfg.Mode)
 		engine = gin.New()
 		for k, fs := range cfg.StaticFS {
 			engine.StaticFS(k, fs)
@@ -195,6 +203,8 @@ func server(cfg *config) *http.Server {
 	portStr := fmt.Sprintf(":%d", cfg.Port)
 	log.Info("api service listen on port " + portStr)
 	var err error
+
+	cfg.initLogger()
 	if err = cfg.initSession(); err != nil {
 		panic(err)
 	}

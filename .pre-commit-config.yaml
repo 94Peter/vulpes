@@ -7,4 +7,6 @@ repos:
         entry: dagger call run-all-checks --source=.
         language: system
         pass_filenames: false
-        always_run: true
+        always_run: false
+        files: \.go$          # 只有 Go 檔變動才跑
+        exclude: ^dagger/     # 排除 dagger 目錄自身的變動，避免無限迴圈

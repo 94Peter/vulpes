@@ -38,9 +38,14 @@ func (m *Basics) GrepDir(ctx context.Context, directoryArg *dagger.Directory, pa
 }
 
 func (m *Basics) RunAllChecks(ctx context.Context, source *dagger.Directory) error {
+	goCache := dag.CacheVolume("go-build-cache")
+	modCache := dag.CacheVolume("go-mod-cache")
+
 	// 1. 定義基礎環境 (鎖定 Go 1.24)
 	goBase := dag.Container().
 		From("golang:1.24-bookworm").
+		WithMountedCache("/root/.cache/go-build", goCache). // 快取編譯結果
+		WithMountedCache("/go/pkg/mod", modCache).          // 快取依賴包
 		WithDirectory("/src", source).
 		WithWorkdir("/src")
 

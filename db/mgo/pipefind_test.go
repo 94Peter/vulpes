@@ -25,7 +25,7 @@ func TestPipeFindOne(t *testing.T) {
 		// Act
 		aggr := &testAggregate{
 			CollectionName: "users",
-			Pipeline:       []bson.D{{{Key: "$match", Value: bson.D{{Key: "name", Value: "Peter"}}}}},
+			Pipeline:       []bson.D{{bson.E{Key: "$match", Value: bson.D{bson.E{Key: "name", Value: "Peter"}}}}},
 		}
 		result, err := mgo.PipeFind(ctx, aggr, nil, 20)
 

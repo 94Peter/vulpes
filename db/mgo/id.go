@@ -10,6 +10,10 @@ type ObjectID struct {
 	bson.ObjectID `bson:"_id,omitempty"`
 }
 
+func (d ObjectID) IsZero() bool {
+	return d.ObjectID.IsZero()
+}
+
 func (d ObjectID) GetObjectId() bson.ObjectID {
 	return d.ObjectID
 }

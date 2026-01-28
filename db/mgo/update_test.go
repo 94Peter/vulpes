@@ -43,8 +43,8 @@ import (
 func TestUpdateMany(t *testing.T) {
 	t.Run("Success", func(t *testing.T) {
 		// Arrange
-		filter := bson.D{{Key: "age", Value: bson.D{{Key: "$gt", Value: 25}}}}
-		update := bson.D{{Key: "$set", Value: bson.D{{Key: "Name", Value: "Over 25"}}}}
+		filter := bson.D{bson.E{Key: "age", Value: bson.D{bson.E{Key: "$gt", Value: 25}}}}
+		update := bson.D{bson.E{Key: "$set", Value: bson.D{bson.E{Key: "Name", Value: "Over 25"}}}}
 		expectedModifiedCount := int64(2)
 
 		mockDB := &mgo.MockDatastore{
@@ -68,8 +68,8 @@ func TestUpdateMany(t *testing.T) {
 
 	t.Run("Error from Datastore", func(t *testing.T) {
 		// Arrange
-		filter := bson.D{{Key: "age", Value: bson.D{{Key: "$gt", Value: 25}}}}
-		update := bson.D{{Key: "$set", Value: bson.D{{Key: "Name", Value: "Over 25"}}}}
+		filter := bson.D{bson.E{Key: "age", Value: bson.D{bson.E{Key: "$gt", Value: 25}}}}
+		update := bson.D{bson.E{Key: "$set", Value: bson.D{bson.E{Key: "Name", Value: "Over 25"}}}}
 		expectedErr := errors.New("datastore update many failed")
 
 		mockDB := &mgo.MockDatastore{

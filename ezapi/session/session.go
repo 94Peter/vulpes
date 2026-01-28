@@ -22,7 +22,7 @@ func init() {
 var sessionsCollection = mgo.NewCollectDef(sessionCollectionName, func() []mongo.IndexModel {
 	return []mongo.IndexModel{
 		{
-			Keys:    bson.D{{Key: "modified", Value: 1}},
+			Keys:    bson.D{bson.E{Key: "modified", Value: 1}},
 			Options: options.Index().SetExpireAfterSeconds(expireSeconds), // 1 hour
 		},
 	}

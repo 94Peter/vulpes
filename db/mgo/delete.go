@@ -46,7 +46,7 @@ func DeleteById[T DocInter](ctx context.Context, doc T) (int64, error) {
 	if dataStore == nil {
 		return 0, ErrNotConnected
 	}
-	return dataStore.DeleteOne(ctx, doc.C(), bson.D{{Key: "_id", Value: doc.GetId()}})
+	return dataStore.DeleteOne(ctx, doc.C(), bson.D{bson.E{Key: "_id", Value: doc.GetId()}})
 }
 
 func (m *mongoStore) DeleteMany(ctx context.Context, collection string, filter bson.D) (int64, error) {

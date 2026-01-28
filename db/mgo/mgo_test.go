@@ -148,8 +148,8 @@ func TestFindById(t *testing.T) {
 func TestUpdateOne(t *testing.T) {
 	t.Run("Success", func(t *testing.T) {
 		// Arrange
-		filter := bson.D{{Key: "name", Value: "old_name"}}
-		update := bson.D{{Key: "$set", Value: bson.D{{Key: "name", Value: "new_name"}}}}
+		filter := bson.D{bson.E{Key: "name", Value: "old_name"}}
+		update := bson.D{bson.E{Key: "$set", Value: bson.D{bson.E{Key: "name", Value: "new_name"}}}}
 		expectedModifiedCount := int64(1)
 
 		mockDB := &mgo.MockDatastore{
@@ -173,8 +173,8 @@ func TestUpdateOne(t *testing.T) {
 
 	t.Run("Error from Datastore", func(t *testing.T) {
 		// Arrange
-		filter := bson.D{{Key: "name", Value: "old_name"}}
-		update := bson.D{{Key: "$set", Value: bson.D{{Key: "name", Value: "new_name"}}}}
+		filter := bson.D{bson.E{Key: "name", Value: "old_name"}}
+		update := bson.D{bson.E{Key: "$set", Value: bson.D{bson.E{Key: "name", Value: "new_name"}}}}
 		expectedErr := errors.New("datastore update failed")
 
 		mockDB := &mgo.MockDatastore{
@@ -200,13 +200,13 @@ func TestUpdateById(t *testing.T) {
 		// Arrange
 		userID := bson.NewObjectID()
 		user := &testUser{ID: userID}
-		update := bson.D{{Key: "$set", Value: bson.D{{Key: "name", Value: "new_name"}}}}
+		update := bson.D{bson.E{Key: "$set", Value: bson.D{bson.E{Key: "name", Value: "new_name"}}}}
 		expectedModifiedCount := int64(1)
 
 		mockDB := &mgo.MockDatastore{
 			OnUpdateOne: func(_ context.Context, collection string, f bson.D, u bson.D) (int64, error) {
 				assert.Equal(t, "users", collection)
-				assert.Equal(t, bson.D{{Key: "_id", Value: userID}}, f)
+				assert.Equal(t, bson.D{bson.E{Key: "_id", Value: userID}}, f)
 				assert.Equal(t, update, u)
 				return expectedModifiedCount, nil
 			},
@@ -226,7 +226,11 @@ func TestUpdateById(t *testing.T) {
 		// Arrange
 		userID := bson.NewObjectID()
 		user := &testUser{ID: userID}
-		update := bson.D{{Key: "$set", Value: bson.D{{Key: "name", Value: "new_name"}}}}
+		update := bson.D{
+			bson.E{Key: "$set", Value: bson.D{
+				bson.E{Key: "name", Value: "new_name"},
+			}},
+		}
 		expectedErr := errors.New("datastore update by id failed")
 
 		mockDB := &mgo.MockDatastore{
@@ -369,7 +373,7 @@ func TestPipeFind(t *testing.T) {
 
 		aggr := &testAggregate{
 			CollectionName: "users",
-			Pipeline:       []bson.D{{{Key: "$match", Value: bson.D{{Key: "name", Value: "Peter"}}}}},
+			Pipeline:       []bson.D{{bson.E{Key: "$match", Value: bson.D{bson.E{Key: "name", Value: "Peter"}}}}},
 		}
 
 		// Act
@@ -395,7 +399,7 @@ func TestPipeFind(t *testing.T) {
 
 		aggr := &testAggregate{
 			CollectionName: "users",
-			Pipeline:       []bson.D{{{Key: "$match", Value: bson.D{{Key: "name", Value: "Peter"}}}}},
+			Pipeline:       []bson.D{{bson.E{Key: "$match", Value: bson.D{bson.E{Key: "name", Value: "Peter"}}}}},
 		}
 
 		// Act
@@ -412,7 +416,7 @@ func TestPipeFind(t *testing.T) {
 func TestDeleteOne(t *testing.T) {
 	t.Run("Success", func(t *testing.T) {
 		// Arrange
-		filter := bson.D{{Key: "name", Value: "Peter"}}
+		filter := bson.D{bson.E{Key: "name", Value: "Peter"}}
 		expectedDeletedCount := int64(1)
 
 		mockDB := &mgo.MockDatastore{
@@ -435,7 +439,7 @@ func TestDeleteOne(t *testing.T) {
 
 	t.Run("Error from Datastore", func(t *testing.T) {
 		// Arrange
-		filter := bson.D{{Key: "name", Value: "Peter"}}
+		filter := bson.D{bson.E{Key: "name", Value: "Peter"}}
 		expectedErr := errors.New("datastore delete failed")
 
 		mockDB := &mgo.MockDatastore{
@@ -466,7 +470,7 @@ func TestDeleteById(t *testing.T) {
 		mockDB := &mgo.MockDatastore{
 			OnDeleteOne: func(_ context.Context, collection string, f bson.D) (int64, error) {
 				assert.Equal(t, "users", collection)
-				assert.Equal(t, bson.D{{Key: "_id", Value: userID}}, f)
+				assert.Equal(t, bson.D{bson.E{Key: "_id", Value: userID}}, f)
 				return expectedDeletedCount, nil
 			},
 		}
@@ -508,7 +512,7 @@ func TestDeleteById(t *testing.T) {
 func TestDeleteMany(t *testing.T) {
 	t.Run("Success", func(t *testing.T) {
 		// Arrange
-		filter := bson.D{{Key: "age", Value: 30}}
+		filter := bson.D{bson.E{Key: "age", Value: 30}}
 		expectedDeletedCount := int64(2)
 
 		mockDB := &mgo.MockDatastore{
@@ -531,7 +535,7 @@ func TestDeleteMany(t *testing.T) {
 
 	t.Run("Error from Datastore", func(t *testing.T) {
 		// Arrange
-		filter := bson.D{{Key: "age", Value: 30}}
+		filter := bson.D{bson.E{Key: "age", Value: 30}}
 		expectedErr := errors.New("datastore delete many failed")
 
 		mockDB := &mgo.MockDatastore{
@@ -556,7 +560,7 @@ func TestImport(t *testing.T) {
 	t.Run("Success", func(t *testing.T) {
 		defer cleanDb()
 		// Arrange
-		data := []byte(`[{"_id": {"$oid": "6900a5df0b590aa2f77ba50b"},"name": "Peter", "age": 30}, 
+		data := []byte(`[{"_id": {"$oid": "6900a5df0b590aa2f77ba50b"},"name": "Peter", "age": 30},
 		{"_id": {"$oid": "6900a5df0b590aa2f77ba50c"},"name": "Alice", "age": 25}]`)
 		reader := bytes.NewReader(data)
 

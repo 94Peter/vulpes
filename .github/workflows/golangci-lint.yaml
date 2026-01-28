@@ -5,7 +5,7 @@ on:
 
 permissions:
   contents: read
-  issues: write 
+  issues: write
 
 jobs:
   golangci:
@@ -31,7 +31,7 @@ jobs:
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
-    
+
       - name: Create Issue
         uses: dacbd/create-issue-action@main
         with:
@@ -44,18 +44,18 @@ jobs:
           labels: CICD
           body: |
             ## Failure Report:
-            
+
             > [!IMPORTANT]
             > Details on failed run: https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}
-    
+
             - Author: @${{ github.triggering_actor }}
             - Branch: `${{ github.ref }}`
             - Commit: ${{ github.sha }}
             - Workflow Path: `${{ github.workflow_ref }}`
-    
+
             - [ ] **Task**: Review failed run, fix the issue(s), and re-run until successful.
-    
-            > This issue was created automatically by GitHub, 
+
+            > This issue was created automatically by GitHub,
             > through `dacbd/create-issue-action@main` action
             > and KemingHe's contribution.
             > **DO NOT** close this issue until resolved.

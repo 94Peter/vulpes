@@ -37,6 +37,9 @@ linters:
       line-length: 120
     dupl:
       threshold: 100
+    govet:
+      enable:
+        - fieldalignment
     errcheck:
       check-type-assertions: true
     goconst:

@@ -121,7 +121,9 @@ func IsConnected() bool {
 }
 
 func IsCollectionExist(ctx context.Context, collectionName string) (bool, error) {
-	result, err := dataStore.getDatabase().ListCollectionNames(ctx, bson.D{{Key: "name", Value: collectionName}})
+	result, err := dataStore.getDatabase().ListCollectionNames(ctx, bson.D{
+		bson.E{Key: "name", Value: collectionName},
+	})
 	if err != nil {
 		return false, err
 	}

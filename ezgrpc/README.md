@@ -72,7 +72,7 @@ import (
 
 	"github.com/94peter/vulpes/ezgrpc"
 	"google.golang.org/grpc"
-	
+
 	// 引入您產生的 pb 檔案
 	pb "path/to/your/greeter"
 )
@@ -126,7 +126,7 @@ import (
 	"log"
 
 	"github.com/94peter/vulpes/ezgrpc"
-	
+
 	// 透過空白導入來觸發 greeter 服務的 init() 函數
 	_ "path/to/your/greeter"
 )

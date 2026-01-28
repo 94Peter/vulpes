@@ -22,24 +22,24 @@ type NestedLevel3 struct {
 }
 
 type NestedLevel2 struct {
-	Value int           `bson:"value"`
 	Next  *NestedLevel3 `bson:"next"`
+	Value int           `bson:"value"`
 }
 
 type NestedLevel1 struct {
-	Value string        `bson:"value"`
 	Next  *NestedLevel2 `bson:"next"`
+	Value string        `bson:"value"`
 }
 
 type ComplexStruct struct {
-	ID       bson.ObjectID     `bson:"_id,omitempty"`
+	Metadata map[string]string `bson:"metadata"`
 	Name     string            `bson:"name"`
-	Age      int               `bson:"age"`
-	Balance  float64           `bson:"balance"`
-	Active   bool              `bson:"active"`
 	Tags     []string          `bson:"tags"`
 	Scores   []int             `bson:"scores"`
-	Metadata map[string]string `bson:"metadata"`
+	Balance  float64           `bson:"balance"`
+	Age      int               `bson:"age"`
+	ID       bson.ObjectID     `bson:"_id,omitempty"`
+	Active   bool              `bson:"active"`
 }
 
 func (c *ComplexStruct) UnmarshalBSON(data []byte) error {
@@ -169,7 +169,7 @@ func BenchmarkPipeFindByPipeline(b *testing.B) {
 	collectionName := "complex_collection"
 	_ = collectionName
 	pipeline := mongo.Pipeline{
-		{{Key: "$match", Value: bson.D{{Key: "active", Value: true}}}},
+		bson.D{bson.E{Key: "$match", Value: bson.D{bson.E{Key: "active", Value: true}}}},
 	}
 
 	b.ResetTimer()

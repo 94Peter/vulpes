@@ -18,7 +18,7 @@ import (
 //
 // update: The update document, e.g., bson.D{{"$set", bson.D{{"field", "value"}}}}.
 func UpdateById[T DocInter](ctx context.Context, doc T, update bson.D) (int64, error) {
-	return UpdateOne(ctx, doc, bson.D{{Key: "_id", Value: doc.GetId()}}, update)
+	return UpdateOne(ctx, doc, bson.D{bson.E{Key: "_id", Value: doc.GetId()}}, update)
 }
 
 // UpdateOne updates the first document that matches a given filter.

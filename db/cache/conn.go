@@ -7,7 +7,7 @@ import (
 
 	"github.com/94peter/vulpes/constant"
 
-	"github.com/go-redis/redis/v8"
+	redis "github.com/redis/go-redis/v9"
 )
 
 const (
@@ -16,7 +16,6 @@ const (
 	defaultDialTime     = constant.DefaultTimeout
 	defaultReadTimeout  = 3 * time.Second
 	defaultWriteTimeout = defaultReadTimeout
-	defaultIdleTimeout  = constant.DefaultIdleTimeout
 	defaultPoolTimeout  = constant.DefaultIdleTimeout
 )
 
@@ -31,7 +30,6 @@ var (
 		ReadTimeout:  defaultReadTimeout,
 		WriteTimeout: defaultWriteTimeout,
 		PoolTimeout:  defaultPoolTimeout,
-		IdleTimeout:  defaultIdleTimeout,
 	}
 )
 

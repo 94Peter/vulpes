@@ -6,7 +6,7 @@ import (
 	"encoding/base64"
 	"fmt"
 
-	"github.com/vmihailenco/msgpack/v5"
+	msgpack "github.com/vmihailenco/msgpack/v5"
 )
 
 // msgpackCodec implements the Codec interface using the MessagePack serialization format.

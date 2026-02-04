@@ -2,7 +2,6 @@ package mgo
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 
 	"go.mongodb.org/mongo-driver/v2/mongo"
@@ -17,9 +16,7 @@ func ReplaceOne[T DocInter](
 	if dataStore == nil {
 		return 0, ErrNotConnected
 	}
-	data, _ := json.Marshal(filter)
-	collectionName := doc.C()
-	_, span := dataStore.startTraceSpan(ctx, collectionName, "save", data)
+	_, span := dataStore.startTraceSpan(ctx, doc.C(), "replaceOne", filter)
 	defer span.End()
 	result, err := dataStore.ReplaceOne(ctx, doc.C(), filter, doc, opts...)
 	if err != nil {

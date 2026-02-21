@@ -47,9 +47,10 @@ type config struct {
 		MaxAge     int
 		Enable     bool
 	}
-	Port   uint16
-	Tracer struct{ Enable bool }
-	Logger struct{ Enable bool }
+	Port                  uint16
+	Tracer                struct{ Enable bool }
+	Logger                struct{ Enable bool }
+	MaxConcurrentRequests int
 }
 
 func (cfg *config) initLogger() {
@@ -188,6 +189,9 @@ func initEngin(cfg *config) {
 			engine.StaticFS(k, fs)
 		}
 		pprof.Register(engine)
+		if cfg.MaxConcurrentRequests > 0 {
+			engine.Use(RequestLimiter(cfg.MaxConcurrentRequests))
+		}
 		engine.Use(cfg.Middlewares...)
 		// 評估留一種方法即可
 		routers.register(engine)

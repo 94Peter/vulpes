@@ -22,6 +22,13 @@ import (
 
 var once sync.Once
 
+const (
+	defaultMaxPoolSize     = 20
+	defaultMinPoolSize     = 5
+	defaultMaxConnIdleTime = 10 * time.Minute
+	defaultTimeout         = 5 * time.Second
+)
+
 // Option defines a function signature for configuring the MongoDB client.
 // This follows the functional options pattern, allowing for flexible and clear configuration.
 type Option func(*options.ClientOptions)
@@ -36,6 +43,9 @@ func WithURI(uri string) Option {
 // WithMaxPoolSize specifies the maximum number of connections allowed in the connection pool.
 func WithMaxPoolSize(size uint64) Option {
 	return func(o *options.ClientOptions) {
+		if size == 0 {
+			size = defaultMaxPoolSize
+		}
 		o.SetMaxPoolSize(size)
 	}
 }
@@ -43,6 +53,9 @@ func WithMaxPoolSize(size uint64) Option {
 // WithMinPoolSize specifies the minimum number of connections to maintain in the connection pool.
 func WithMinPoolSize(size uint64) Option {
 	return func(o *options.ClientOptions) {
+		if size == 0 {
+			size = defaultMinPoolSize
+		}
 		o.SetMinPoolSize(size)
 	}
 }
@@ -50,7 +63,20 @@ func WithMinPoolSize(size uint64) Option {
 // WithMaxConnIdleTime sets the maximum duration that a connection can remain idle in the pool.
 func WithMaxConnIdleTime(d time.Duration) Option {
 	return func(o *options.ClientOptions) {
+		if d == 0 {
+			d = defaultMaxConnIdleTime
+		}
 		o.SetMaxConnIdleTime(d)
+	}
+}
+
+// WithTimeout sets the maximum duration for database operations.
+func WithTimeout(d time.Duration) Option {
+	return func(o *options.ClientOptions) {
+		if d == 0 {
+			d = defaultTimeout
+		}
+		o.SetTimeout(d)
 	}
 }
 

@@ -72,3 +72,9 @@ func WithMode(mode string) option {
 		c.Mode = mode
 	}
 }
+
+func WithMaxConcurrentRequests(limit int) option {
+	return func(c *config) {
+		c.MaxConcurrentRequests = limit
+	}
+}

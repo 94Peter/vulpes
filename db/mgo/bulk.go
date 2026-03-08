@@ -57,6 +57,15 @@ func (b *bulkOperation) UpdateById(id any, update any) BulkOperator {
 	return b.UpdateOne(bson.M{"_id": id}, update)
 }
 
+func (b *bulkOperation) UpsertOne(filter any, update any) BulkOperator {
+	model := mongo.NewUpdateOneModel().
+		SetFilter(filter).
+		SetUpdate(update).
+		SetUpsert(true)
+	b.operations = append(b.operations, model)
+	return b
+}
+
 // DeleteOne adds a DeleteOne operation to the bulk request.
 // filter: The filter to select the document to delete.
 func (b *bulkOperation) DeleteOne(filter any) BulkOperator {
@@ -67,6 +76,12 @@ func (b *bulkOperation) DeleteOne(filter any) BulkOperator {
 
 // DeleteById adds a convenient DeleteOne operation filtered by the document's _id.
 func (b *bulkOperation) DeleteById(id any) BulkOperator {
+	if id == nil {
+		return b
+	}
+	if oid, ok := id.(bson.ObjectID); ok && oid.IsZero() {
+		return b
+	}
 	return b.DeleteOne(bson.M{"_id": id})
 }
 

@@ -74,6 +74,7 @@ type BulkOperator interface {
 	InsertOne(doc DocInter) BulkOperator
 	UpdateOne(filter any, update any) BulkOperator
 	UpdateById(id any, update any) BulkOperator
+	UpsertOne(filter any, update any) BulkOperator
 	DeleteOne(filter any) BulkOperator
 	DeleteById(id any) BulkOperator
 
@@ -157,4 +158,8 @@ func spanErrorHandler(err error, span trace.Span) error {
 		span.SetStatus(codes.Ok, "ok")
 	}
 	return err
+}
+
+func GetDatabase() *mongo.Database {
+	return dataStore.getDatabase()
 }

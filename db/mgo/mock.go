@@ -68,6 +68,7 @@ type MockDatastore struct {
 type MockBulkOperator struct {
 	OnInsertOne func(doc DocInter) BulkOperator
 	OnUpdateOne func(filter any, update any) BulkOperator
+	OnUpsertOne func(filter any, update any) BulkOperator
 	OnExecute   func(ctx context.Context) (*mongo.BulkWriteResult, error)
 	OnDeleteOne func(filter any) BulkOperator
 }
@@ -194,6 +195,10 @@ func (m *MockBulkOperator) UpdateOne(filter any, update any) BulkOperator {
 
 func (m *MockBulkOperator) UpdateById(id any, update any) BulkOperator {
 	return m.OnUpdateOne(bson.M{"_id": id}, update)
+}
+
+func (m *MockBulkOperator) UpsertOne(filter any, update any) BulkOperator {
+	return m.OnUpsertOne(filter, update)
 }
 
 func (m *MockBulkOperator) DeleteOne(filter any) BulkOperator {

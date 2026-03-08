@@ -44,9 +44,9 @@ func (m *Basics) RunAllChecks(ctx context.Context, source *dagger.Directory) err
 	modCache := dag.CacheVolume("go-mod-cache")
 	lintCache := dag.CacheVolume("golangci-lint-cache")
 
-	// 1. 定義基礎環境 (鎖定 Go 1.24)
+	// 1. 定義基礎環境 (鎖定 Go 1.25)
 	toolBase := dag.Container().
-		From("golang:1.24-bookworm").
+		From("golang:1.25-bookworm").
 		WithMountedCache("/go/pkg/mod", modCache).
 		WithMountedCache("/root/.cache/go-build", goCache).
 		WithExec([]string{"go", "install", "golang.org/x/vuln/cmd/govulncheck@latest"})
@@ -118,10 +118,10 @@ func (m *Basics) Ci(ctx context.Context, source *dagger.Directory) error {
 		WithExposedPort(27017).
 		AsService()
 
-	// 1. 建立基礎環境 (使用 Go 1.24)
+	// 1. 建立基礎環境 (使用 Go 1.25)
 	// 原本 YAML 提取 go.mod 版本的邏輯，在這裡直接鎖定環境更穩定
 	goBase := dag.Container().
-		From("golang:1.24-bookworm").
+		From("golang:1.25-bookworm").
 		WithDirectory("/src", source).
 		WithWorkdir("/src")
 

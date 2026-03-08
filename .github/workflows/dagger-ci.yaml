@@ -15,6 +15,12 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@v4
 
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.25'
+          cache: true
+
       # 1. 啟動 Dagger (這會自動處理 Dagger Engine 的啟動)
       - name: Run Dagger CI
         uses: dagger/dagger-for-github@v8.2.0
